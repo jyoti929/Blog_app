@@ -1,0 +1,2 @@
+/* Legacy stylesheet entry point. Shared styles now live in css/style.css. */
+@import url("css/style.css");
