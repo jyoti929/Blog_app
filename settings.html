@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings | Blogify</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <!-- Left Sidebar Navigation -->
+    <aside class="dash-sidebar" id="sidebar">
+      <a href="create-blog.html" class="btn-green">+ New Blog</a>
+
+      <nav class="dash-menu">
+        <a class="dash-link" href="dashboard.html"><span>🏠</span> Dashboard</a>
+        <a class="dash-link" href="dashboard.html#recent-posts"><span>📑</span> My Blogs</a>
+        <a class="dash-link" href="index.html#categories"><span>📁</span> Categories</a>
+        <a class="dash-link" href="#comments"><span>💬</span> Comments</a>
+        <a class="dash-link" href="profile.html"><span>👤</span> Profile</a>
+        <a class="dash-link active" href="settings.html"><span>⚙️</span> Settings</a>
+        <a class="dash-link" href="login.html"><span>🚪</span> Logout</a>
+      </nav>
+
+      <!-- Bottom Quote Box -->
+      <div class="sidebar-quote-box">
+        <span>“</span>
+        <p>"The best way to predict the future is to create it."</p>
+        <small style="color:var(--primary); font-weight:600; display:block; margin-top:4px;">— Peter Drucker</small>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dash-main">
+      <header class="dash-header">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <button class="mobile-menu-toggle" style="font-size:1.2rem;" aria-label="Toggle Menu">☰</button>
+          <h1>Application Settings</h1>
+        </div>
+
+        <div class="user-profile-widget">
+          <button class="icon-btn" style="width:36px; height:36px; border:1px solid var(--line); border-radius:50%; position:relative;" title="Notifications">
+            🔔 <span class="badge-count" style="top:-2px; right:-2px;">1</span>
+          </button>
+          <button class="icon-btn theme-toggle-btn" style="width:36px; height:36px; border:1px solid var(--line); border-radius:50%;" title="Toggle Mode">🌙</button>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="author-avatar-circle" style="width:34px; height:34px; font-size:0.8rem;">JD</div>
+            <strong style="font-size:0.88rem; color:var(--ink);">John Doe ▾</strong>
+          </div>
+        </div>
+      </header>
+
+      <div class="dash-content">
+        <!-- Preferences Card -->
+        <div class="profile-card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:16px;">Preferences & Theme</h3>
+          
+          <form id="preferences-form">
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="settings-theme">Color Theme</label>
+                <select id="settings-theme" name="theme">
+                  <option value="light">Light Theme (Default)</option>
+                  <option value="dark">Dark Theme</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="settings-category">Default Writing Category</label>
+                <select id="settings-category" name="category">
+                  <option value="Travel">Travel</option>
+                  <option value="Lifestyle">Lifestyle</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Food">Food</option>
+                  <option value="Business">Business</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="settings-language">Language</label>
+                <select id="settings-language" name="language">
+                  <option value="en">English (US)</option>
+                  <option value="es">Spanish</option>
+                  <option value="fr">French</option>
+                  <option value="de">German</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="settings-timezone">Timezone</label>
+                <select id="settings-timezone" name="timezone">
+                  <option value="PST">Pacific Standard Time (PST)</option>
+                  <option value="EST">Eastern Standard Time (EST)</option>
+                  <option value="UTC">Coordinated Universal Time (UTC)</option>
+                  <option value="IST">Indian Standard Time (IST)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+              <button class="btn-green" type="submit">Save Preferences</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Security Card -->
+        <div class="profile-card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:16px;">Account Security</h3>
+
+          <form id="security-form">
+            <div class="form-field" style="margin-bottom:16px;">
+              <label for="curr-pass">Current Password</label>
+              <input id="curr-pass" type="password" placeholder="••••••••">
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="new-pass">New Password</label>
+                <input id="new-pass" type="password" placeholder="At least 6 characters">
+              </div>
+
+              <div class="form-field">
+                <label for="confirm-pass">Confirm New Password</label>
+                <input id="confirm-pass" type="password" placeholder="Repeat new password">
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+              <button class="btn-green" type="submit">Update Password</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Email Notifications Card -->
+        <div class="profile-card">
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:16px;">Email Notifications</h3>
+
+          <form id="notifications-form" style="display:grid; gap:14px;">
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; cursor:pointer;">
+              <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--primary);">
+              <span>Email me when a reader comments on my articles</span>
+            </label>
+
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; cursor:pointer;">
+              <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--primary);">
+              <span>Email me when a reader likes my article</span>
+            </label>
+
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.88rem; cursor:pointer;">
+              <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--primary);">
+              <span>Send weekly views & performance summary report</span>
+            </label>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+              <button class="btn-green" type="submit">Save Notification Settings</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>

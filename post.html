@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Article Reader | Blogify</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <nav class="navbar container">
+      <a class="brand" href="index.html">
+        <span class="brand-icon">📖</span> Blogify
+      </a>
+
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="index.html#categories">Categories</a>
+        <a href="dashboard.html">Dashboard</a>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="icon-btn theme-toggle-btn" title="Toggle Mode" style="width:36px; height:36px; border:1px solid var(--line); border-radius:8px;">🌙</button>
+        <a class="btn-green" href="create-blog.html">+ New Blog</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div id="article-main-container" style="padding:40px 0 60px;">
+      <!-- Dynamically rendered by js/script.js -->
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <span>© 2024 Blogify. All rights reserved.</span>
+      <a href="index.html" style="color:var(--primary); font-weight:600;">← Back to Home</a>
+    </div>
+  </footer>
+
+  <script src="js/store.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>

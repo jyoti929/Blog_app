@@ -1,31 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Blog | My Blog</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Blog | Blogify</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <!-- Reusable Auth Manager (Route Protection) -->
+  <script src="js/auth.js"></script>
+  <script>Auth.checkAuth();</script>
 </head>
-<body class="dashboard-page">
-  <aside class="sidebar" id="sidebar">
-    <a class="brand sidebar-brand" href="index.html"><span class="brand-mark">M</span>My Blog</a>
-    <nav class="sidebar-nav" aria-label="Dashboard navigation"><a href="dashboard.html"><span>▦</span> Overview</a><a href="dashboard.html#recent-posts"><span>▤</span> My posts</a><a class="active" href="create-blog.html"><span>✎</span> Create blog</a><a href="dashboard.html#analytics"><span>◔</span> Analytics</a></nav>
-    <div class="sidebar-bottom"><a href="index.html"><span>⌂</span> View website</a><a href="login.html"><span>↪</span> Log out</a></div>
-  </aside>
-  <main class="dashboard-main">
-    <header class="dashboard-header"><button class="dashboard-menu" type="button" aria-label="Toggle dashboard menu" aria-expanded="false" aria-controls="sidebar">☰</button><div><a class="back-link" href="dashboard.html">← Back to dashboard</a><h1>Create a new post</h1></div><div class="profile"><span>AS</span><div><strong>Alex Smith</strong><small>Writer</small></div></div></header>
-    <div class="dashboard-content create-content">
-      <form id="create-blog-form" class="editor-card" novalidate>
-        <div class="editor-heading"><div><p class="eyebrow">Tell your story</p><h2>Post details</h2></div><span class="save-status" id="save-status">Not published</span></div>
-        <div class="form-group"><label for="blog-title">Blog title <span>*</span></label><input id="blog-title" name="title" type="text" placeholder="Give your post a memorable title"><small class="error-message"></small></div>
-        <div class="form-row"><div class="form-group"><label for="blog-category">Category <span>*</span></label><select id="blog-category" name="category"><option value="">Choose a category</option><option>Technology</option><option>Design</option><option>Wellbeing</option><option>Lifestyle</option><option>Creativity</option><option>Personal</option></select><small class="error-message"></small></div><div class="form-group"><label for="blog-image">Cover image</label><input id="blog-image" name="image" type="file" accept="image/*"><small class="input-hint">PNG, JPG, or WEBP up to 5MB</small></div></div>
-        <div class="form-group"><div class="label-row"><label for="blog-content">Blog content <span>*</span></label><span id="char-count">0 / 2,000</span></div><textarea id="blog-content" name="content" maxlength="2000" placeholder="Write your story here..."></textarea><small class="error-message"></small></div>
-        <div class="form-actions"><button class="button button-ghost" type="reset">Reset</button><button class="button button-primary" type="submit">Publish post <span aria-hidden="true">→</span></button></div><p class="form-success publish-success" aria-live="polite"></p>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <nav class="navbar container">
+      <a class="brand" href="index.html">
+        <span class="brand-icon">📖</span> Blogify
+      </a>
+
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="dashboard.html">Dashboard</a>
+      </div>
+
+      <button class="icon-btn theme-toggle-btn" title="Toggle Mode" style="width:36px; height:36px; border:1px solid var(--line); border-radius:8px;">🌙</button>
+    </nav>
+  </header>
+
+  <main class="container" style="padding:40px 0 60px;">
+    <div style="max-width:760px; margin:0 auto; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); padding:36px; box-shadow:var(--shadow-md);">
+      <div style="margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <a href="dashboard.html" style="color:var(--muted); font-size:0.82rem; font-weight:500;">← Back to Dashboard</a>
+          <h1 id="editor-page-header" style="font-size:1.6rem; font-weight:800; margin-top:4px;">Create New Blog</h1>
+        </div>
+        <span class="badge-tag" style="background:var(--primary-light); color:var(--primary);">Blogify Editor</span>
+      </div>
+
+      <form id="create-blog-form" novalidate>
+        <div style="margin-bottom:20px;">
+          <label for="blog-title" style="display:block; font-size:0.84rem; font-weight:700; margin-bottom:6px;">Blog Title *</label>
+          <input id="blog-title" name="title" type="text" placeholder="Enter post title..." style="width:100%; height:44px; border:1px solid var(--line); border-radius:8px; padding:0 14px; background:var(--canvas); outline:none;" required>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
+          <div>
+            <label for="blog-category" style="display:block; font-size:0.84rem; font-weight:700; margin-bottom:6px;">Category *</label>
+            <select id="blog-category" name="category" style="width:100%; height:44px; border:1px solid var(--line); border-radius:8px; padding:0 14px; background:var(--canvas); outline:none;" required>
+              <option value="">Select Category</option>
+              <option value="Travel">Travel</option>
+              <option value="Lifestyle">Lifestyle</option>
+              <option value="Technology">Technology</option>
+              <option value="Food">Food</option>
+              <option value="Business">Business</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="blog-image" style="display:block; font-size:0.84rem; font-weight:700; margin-bottom:6px;">Cover Photo</label>
+            <input id="blog-image" name="image" type="file" accept="image/*" style="width:100%; height:44px; border:1px solid var(--line); border-radius:8px; padding:8px 14px; background:var(--canvas); outline:none;">
+          </div>
+        </div>
+
+        <div id="image-preview-box" style="display:none; height:140px; border-radius:8px; background-size:cover; background-position:center; margin-bottom:20px; border:1px solid var(--line);"></div>
+
+        <div style="margin-bottom:24px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <label for="blog-content" style="font-size:0.84rem; font-weight:700;">Blog Content *</label>
+            <span id="char-count" style="font-size:0.75rem; color:var(--muted);">0 chars</span>
+          </div>
+          <textarea id="blog-content" name="content" placeholder="Write your blog story here..." style="width:100%; min-height:240px; border:1px solid var(--line); border-radius:8px; padding:14px; background:var(--canvas); outline:none; line-height:1.6;" required></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:12px;">
+          <button class="btn-green" type="submit" name="save-draft" style="background:var(--paper); border:1px solid var(--line); color:var(--ink) !important; box-shadow:none;">Save as Draft</button>
+          <button class="btn-green" type="submit" name="publish-post">Publish Blog →</button>
+        </div>
       </form>
-      <aside class="writing-tips"><span class="tips-icon">✦</span><h3>Writing tip</h3><p>Start with a clear idea, then write as if you’re speaking to one curious friend.</p><hr><strong>Before publishing</strong><ul><li>Add a descriptive title</li><li>Choose a fitting category</li><li>Review your post for clarity</li></ul></aside>
     </div>
   </main>
+
+  <script src="js/store.js"></script>
   <script src="js/script.js"></script>
 </body>
 </html>

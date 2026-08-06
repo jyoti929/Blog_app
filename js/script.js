@@ -1,141 +1,624 @@
-/* Shared interactions and client-side validation for My Blog. */
+/* ==========================================================================
+   BLOGIFY INTERACTIVE UI CONTROLLER - COMPLETE SPECIFICATION
+   ========================================================================== */
+
 document.addEventListener('DOMContentLoaded', () => {
-  const getGroup = (field) => field.closest('.form-group');
-  const setError = (field, message) => {
-    const group = getGroup(field);
-    if (!group) return;
-    group.querySelector('.error-message').textContent = message;
-    field.classList.toggle('error', Boolean(message));
+  if (!window.store) return;
+
+  // Theme Initializer
+  const currentTheme = window.store.getTheme();
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  
+  const themeToggles = document.querySelectorAll('.theme-toggle-btn');
+  const updateThemeUI = (theme) => {
+    themeToggles.forEach(btn => {
+      btn.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+    });
   };
-  const clearErrors = (form) => form.querySelectorAll('.error-message').forEach((item) => (item.textContent = ''));
-  const emailIsValid = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  updateThemeUI(currentTheme);
 
-  // Mobile navigation on the home page.
-  const navToggle = document.querySelector('.nav-toggle');
-  const navLinks = document.querySelector('.nav-links');
-  if (navToggle && navLinks) {
-    navToggle.addEventListener('click', () => {
-      const isOpen = navLinks.classList.toggle('open');
-      navToggle.setAttribute('aria-expanded', isOpen);
-    });
-  }
-
-  // Filters home-page cards by title, category, or hidden keywords.
-  const searchInput = document.querySelector('#blog-search');
-  if (searchInput) {
-    const cards = [...document.querySelectorAll('.blog-card')];
-    const emptyState = document.querySelector('#empty-search');
-    const status = document.querySelector('#search-status');
-    searchInput.addEventListener('input', () => {
-      const term = searchInput.value.trim().toLowerCase();
-      const matches = cards.filter((card) => {
-        const matchesSearch = card.dataset.search.includes(term);
-        card.hidden = !matchesSearch;
-        return matchesSearch;
-      });
-      emptyState.hidden = matches.length !== 0;
-      status.textContent = term ? `${matches.length} article${matches.length === 1 ? '' : 's'} found` : '';
-    });
-  }
-
-  // Reusable show/hide password control.
-  document.querySelectorAll('.password-toggle').forEach((button) => {
-    button.addEventListener('click', () => {
-      const input = button.parentElement.querySelector('input');
-      const revealing = input.type === 'password';
-      input.type = revealing ? 'text' : 'password';
-      button.textContent = revealing ? 'Hide' : 'Show';
-      button.setAttribute('aria-label', `${revealing ? 'Hide' : 'Show'} password`);
-      button.setAttribute('aria-pressed', revealing);
+  themeToggles.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const nextTheme = window.store.toggleTheme();
+      updateThemeUI(nextTheme);
+      showToast(`Switched to ${nextTheme} mode`);
     });
   });
 
-  // Login form validation.
+  // Mobile Menu Toggle
+  const mobileToggles = document.querySelectorAll('.mobile-menu-toggle');
+  const sidebar = document.querySelector('#sidebar');
+  mobileToggles.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (sidebar) sidebar.classList.toggle('open');
+    });
+  });
+
+  // Toast Function
+  window.showToast = (message) => {
+    let toast = document.querySelector('.toast-notification');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.className = 'toast-notification';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('toast-show');
+    setTimeout(() => {
+      toast.classList.remove('toast-show');
+    }, 2800);
+  };
+
+  // Sync Current Logged-in User Header UI
+  const currentUser = window.store.getCurrentUser();
+  if (currentUser) {
+    document.querySelectorAll('.author-avatar-circle').forEach(el => {
+      el.textContent = currentUser.avatar || 'JD';
+    });
+    document.querySelectorAll('.user-profile-widget strong').forEach(el => {
+      el.textContent = `${currentUser.name} ▾`;
+    });
+  }
+
+  // Logout Handlers
+  document.querySelectorAll('a[href="login.html"]').forEach(btn => {
+    if (btn.textContent.includes('Logout')) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.store.logoutUser();
+        showToast('Logged out');
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 500);
+      });
+    }
+  });
+
+  // Bookmarks Badge Sync
+  const updateBookmarkBadges = () => {
+    const bookmarks = window.store.getBookmarks();
+    const badges = document.querySelectorAll('.badge-count');
+    badges.forEach(b => {
+      b.textContent = bookmarks.length;
+      b.style.display = bookmarks.length > 0 ? 'grid' : 'none';
+    });
+  };
+  updateBookmarkBadges();
+
+  // Bookmarks Drawer
+  const bookmarkTrigger = document.querySelector('#open-bookmarks-btn');
+  if (bookmarkTrigger) {
+    let overlay = document.querySelector('.drawer-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'drawer-overlay';
+      overlay.innerHTML = `
+        <div class="drawer-content">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:1px solid var(--line); margin-bottom:20px;">
+            <h3 style="font-size:1.1rem; font-weight:700;">Saved Reading List</h3>
+            <button class="icon-btn close-drawer-btn">&times;</button>
+          </div>
+          <div id="drawer-bookmarks-list"></div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('.close-drawer-btn').addEventListener('click', () => {
+        overlay.classList.remove('open');
+      });
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    }
+
+    bookmarkTrigger.addEventListener('click', () => {
+      renderBookmarkDrawer();
+      overlay.classList.add('open');
+    });
+
+    const renderBookmarkDrawer = () => {
+      const listContainer = document.querySelector('#drawer-bookmarks-list');
+      const bIds = window.store.getBookmarks();
+      const allPosts = window.store.getAllPosts();
+      const bookmarkedPosts = allPosts.filter(p => bIds.includes(p.id));
+
+      if (bookmarkedPosts.length === 0) {
+        listContainer.innerHTML = `<p style="color:var(--muted); font-size:0.88rem; text-align:center; padding:30px 0;">No saved blogs yet.</p>`;
+        return;
+      }
+
+      listContainer.innerHTML = bookmarkedPosts.map(post => `
+        <div style="display:flex; gap:12px; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--line);">
+          <div>
+            <span class="badge-tag" style="font-size:0.65rem;">${post.category}</span>
+            <h4 style="font-size:0.88rem; font-weight:700; margin-top:4px;"><a href="post.html?id=${post.id}">${post.title}</a></h4>
+            <small style="color:var(--muted); font-size:0.75rem;">${post.date} · ${post.readTime}</small>
+          </div>
+          <button class="icon-btn remove-bookmark-btn" data-id="${post.id}" title="Remove" style="width:30px; height:30px; font-size:0.8rem;">✕</button>
+        </div>
+      `).join('');
+
+      listContainer.querySelectorAll('.remove-bookmark-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pId = btn.dataset.id;
+          window.store.toggleBookmark(pId);
+          updateBookmarkBadges();
+          renderBookmarkDrawer();
+          if (typeof renderHomePosts === 'function') renderHomePosts();
+          showToast('Removed from reading list');
+        });
+      });
+    };
+  }
+
+  // ==========================================================================
+  // SIGNUP FORM LOGIC (register.html)
+  // ==========================================================================
+  const signupForm = document.querySelector('#signup-form');
+  if (signupForm) {
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = signupForm.elements.name.value.trim();
+      const email = signupForm.elements.email.value.trim();
+      const password = signupForm.elements.password.value;
+      const confirm = signupForm.elements.confirm.value;
+
+      if (!name || !email || !password) {
+        alert('Please fill out all required fields.');
+        return;
+      }
+
+      if (password !== confirm) {
+        alert('Passwords do not match.');
+        return;
+      }
+
+      const res = window.store.registerUser(name, email, password);
+      if (!res.success) {
+        alert(res.message);
+        return;
+      }
+
+      showToast('Account created successfully! Redirecting to login...');
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 1000);
+    });
+  }
+
+  // ==========================================================================
+  // LOGIN FORM LOGIC (login.html)
+  // ==========================================================================
   const loginForm = document.querySelector('#login-form');
   if (loginForm) {
-    loginForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      clearErrors(loginForm);
-      const email = loginForm.elements.email;
-      const password = loginForm.elements.password;
-      let valid = true;
-      if (!email.value.trim()) { setError(email, 'Email address is required.'); valid = false; }
-      else if (!emailIsValid(email.value.trim())) { setError(email, 'Enter a valid email address.'); valid = false; }
-      if (!password.value) { setError(password, 'Password is required.'); valid = false; }
-      if (valid) {
-        const submitButton = loginForm.querySelector('[type="submit"]');
-        loginForm.querySelector('.form-success').textContent = 'Login successful! Redirecting to your dashboard…';
-        submitButton.disabled = true;
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 700);
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = loginForm.elements.email.value.trim();
+      const password = loginForm.elements.password.value;
+
+      if (!email || !password) {
+        alert('Please enter your email and password.');
+        return;
       }
+
+      const res = window.store.loginUser(email, password);
+      if (!res.success) {
+        alert(res.message);
+        return;
+      }
+
+      showToast('Logged in successfully! Redirecting to dashboard...');
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 800);
     });
   }
 
-  // Registration validation, including matching passwords.
-  const registerForm = document.querySelector('#register-form');
-  if (registerForm) {
-    registerForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      clearErrors(registerForm);
-      const name = registerForm.elements.fullName;
-      const email = registerForm.elements.email;
-      const password = registerForm.elements.password;
-      const confirmPassword = registerForm.elements.confirmPassword;
-      const terms = registerForm.elements.terms;
-      let valid = true;
-      if (!name.value.trim()) { setError(name, 'Full name is required.'); valid = false; }
-      if (!email.value.trim()) { setError(email, 'Email address is required.'); valid = false; }
-      else if (!emailIsValid(email.value.trim())) { setError(email, 'Enter a valid email address.'); valid = false; }
-      if (!password.value) { setError(password, 'Password is required.'); valid = false; }
-      else if (password.value.length < 6) { setError(password, 'Use at least 6 characters.'); valid = false; }
-      if (!confirmPassword.value) { setError(confirmPassword, 'Please confirm your password.'); valid = false; }
-      else if (confirmPassword.value !== password.value) { setError(confirmPassword, 'Passwords do not match.'); valid = false; }
-      if (!terms.checked) { registerForm.querySelector('.terms-error').textContent = 'Please accept the terms to continue.'; valid = false; }
-      if (valid) {
-        const submitButton = registerForm.querySelector('[type="submit"]');
-        registerForm.querySelector('.form-success').textContent = 'Account created successfully! Redirecting to login…';
-        submitButton.disabled = true;
-        setTimeout(() => { window.location.href = 'login.html'; }, 700);
+  // ==========================================================================
+  // PAGE 1: HOME PAGE LOGIC (index.html)
+  // ==========================================================================
+  const blogGrid = document.querySelector('#blog-grid');
+  if (blogGrid) {
+    let activeCategory = 'All';
+    let searchQuery = '';
+
+    const renderHomePosts = () => {
+      let posts = window.store.getPublishedPosts();
+
+      if (activeCategory !== 'All') {
+        posts = posts.filter(p => p.category.toLowerCase() === activeCategory.toLowerCase());
       }
+
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        posts = posts.filter(p =>
+          p.title.toLowerCase().includes(query) ||
+          p.excerpt.toLowerCase().includes(query) ||
+          p.category.toLowerCase().includes(query)
+        );
+      }
+
+      const emptyState = document.querySelector('#empty-search');
+      const searchStatus = document.querySelector('#search-status');
+
+      if (searchStatus) {
+        searchStatus.textContent = (searchQuery || activeCategory !== 'All')
+          ? `Showing ${posts.length} blog${posts.length === 1 ? '' : 's'}`
+          : '';
+      }
+
+      if (posts.length === 0) {
+        blogGrid.style.display = 'none';
+        if (emptyState) emptyState.hidden = false;
+        return;
+      }
+
+      blogGrid.style.display = 'grid';
+      if (emptyState) emptyState.hidden = true;
+
+      blogGrid.innerHTML = posts.map(post => {
+        const bgStyle = post.imageData ? `background-image: url(${post.imageData})` : '';
+
+        return `
+          <article class="post-card">
+            <div class="post-thumb ${post.imageClass || 'image-focus'}" style="${bgStyle}">
+              <span class="badge-tag">${post.category}</span>
+            </div>
+            <div class="post-content">
+              <h3><a href="post.html?id=${post.id}">${post.title}</a></h3>
+              <p>${post.excerpt}</p>
+              <div class="post-footer">
+                <div class="post-author">
+                  <div class="author-avatar-circle">${(post.author || 'JD').split(' ').map(n=>n[0]).join('')}</div>
+                  <div>
+                    <span>${post.author}</span><br>
+                    <small style="color:var(--muted); font-weight:normal;">${post.date}</small>
+                  </div>
+                </div>
+                <span>⏱ ${post.readTime}</span>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    };
+
+    const categoryCards = document.querySelectorAll('.category-card');
+    categoryCards.forEach(card => {
+      card.addEventListener('click', () => {
+        activeCategory = card.dataset.category || 'All';
+        const section = document.querySelector('#latest-posts');
+        if (section) section.scrollIntoView({ behavior: 'smooth' });
+        renderHomePosts();
+      });
+    });
+
+    const searchInput = document.querySelector('#blog-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value;
+        renderHomePosts();
+      });
+    }
+
+    renderHomePosts();
+  }
+
+  // ==========================================================================
+  // PAGE 2: ARTICLE READER (post.html)
+  // ==========================================================================
+  const articleContainer = document.querySelector('#article-main-container');
+  if (articleContainer) {
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('id') || 'post-1';
+
+    window.store.incrementViews(postId);
+    const post = window.store.getPostById(postId);
+
+    if (!post) {
+      articleContainer.innerHTML = `
+        <div style="text-align:center; padding:80px 0;">
+          <h2>Article Not Found</h2>
+          <a href="index.html" class="btn-green" style="margin-top:20px; display:inline-flex;">Back to Home</a>
+        </div>
+      `;
+    } else {
+      document.title = `${post.title} | Blogify`;
+      const isBookmarked = window.store.isBookmarked(post.id);
+      const isLiked = window.store.isLiked(post.id);
+      const bgStyle = post.imageData ? `background-image: url(${post.imageData})` : '';
+
+      articleContainer.innerHTML = `
+        <div style="max-width:780px; margin:0 auto;">
+          <a href="index.html" style="color:var(--muted); font-weight:500; font-size:0.85rem;">← Back to blogs</a>
+          <div style="margin:16px 0 24px;">
+            <span class="badge-tag">${post.category}</span>
+            <h1 style="font-size:2.4rem; font-weight:800; margin:10px 0; line-height:1.2;">${post.title}</h1>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:16px; border-bottom:1px solid var(--line); color:var(--muted); font-size:0.85rem;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="author-avatar-circle" style="width:32px; height:32px; font-size:0.75rem;">${(post.author || 'JD').split(' ').map(n=>n[0]).join('')}</div>
+                <strong>${post.author}</strong>
+              </div>
+              <span>${post.date} · ⏱ ${post.readTime} (${(post.views || 1).toLocaleString()} views)</span>
+            </div>
+          </div>
+
+          <div class="post-thumb ${post.imageClass || 'image-focus'}" style="height:340px; border-radius:14px; margin-bottom:30px; ${bgStyle}"></div>
+
+          <div style="font-size:1.05rem; line-height:1.8; color:var(--ink);">
+            ${post.content}
+          </div>
+
+          <div style="display:flex; gap:12px; margin:36px 0; padding:20px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+            <button class="btn-green" id="article-like-btn" style="background:var(--paper); border:1px solid var(--line); color:var(--ink) !important; box-shadow:none;">
+              <span>${isLiked ? '❤️' : '🤍'}</span> <span id="like-count">${post.likes || 0}</span> Likes
+            </button>
+            <button class="btn-green" id="article-bookmark-btn" style="background:var(--paper); border:1px solid var(--line); color:var(--ink) !important; box-shadow:none;">
+              <span>${isBookmarked ? '🔖' : '📑'}</span> Save Article
+            </button>
+          </div>
+
+          <div style="margin-top:40px;">
+            <h3 style="font-size:1.2rem; font-weight:700; margin-bottom:16px;">Comments (<span id="comments-count">0</span>)</h3>
+            <form style="background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:24px;" id="comment-form">
+              <textarea id="comment-input" placeholder="Write a comment..." style="width:100%; min-height:90px; border:1px solid var(--line); border-radius:8px; padding:12px; background:var(--canvas); outline:none; margin-bottom:12px;" required></textarea>
+              <button class="btn-green" type="submit">Post Comment</button>
+            </form>
+            <div id="comments-list" style="display:grid; gap:14px;"></div>
+          </div>
+        </div>
+      `;
+
+      const likeBtn = document.querySelector('#article-like-btn');
+      likeBtn.addEventListener('click', () => {
+        const res = window.store.toggleLike(postId);
+        likeBtn.querySelector('span').textContent = res.liked ? '❤️' : '🤍';
+        document.querySelector('#like-count').textContent = res.count;
+        showToast(res.liked ? 'Liked article' : 'Unliked');
+      });
+
+      const bookmarkBtn = document.querySelector('#article-bookmark-btn');
+      bookmarkBtn.addEventListener('click', () => {
+        const bookmarked = window.store.toggleBookmark(postId);
+        bookmarkBtn.querySelector('span').textContent = bookmarked ? '🔖' : '📑';
+        updateBookmarkBadges();
+        showToast(bookmarked ? 'Saved article' : 'Removed');
+      });
+
+      const renderComments = () => {
+        const comments = window.store.getComments(postId);
+        document.querySelector('#comments-count').textContent = comments.length;
+        const list = document.querySelector('#comments-list');
+        if (comments.length === 0) {
+          list.innerHTML = `<p style="color:var(--muted); font-size:0.85rem;">No comments yet. Be the first to share your thoughts!</p>`;
+          return;
+        }
+        list.innerHTML = comments.map(c => `
+          <div style="background:var(--paper); border:1px solid var(--line); border-radius:8px; padding:16px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.8rem;">
+              <strong>${c.author}</strong>
+              <span style="color:var(--muted);">${c.date}</span>
+            </div>
+            <p style="font-size:0.88rem; color:var(--ink);">${c.content}</p>
+          </div>
+        `).join('');
+      };
+      renderComments();
+
+      document.querySelector('#comment-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.querySelector('#comment-input');
+        if (input.value.trim()) {
+          window.store.addComment(postId, input.value.trim());
+          input.value = '';
+          renderComments();
+          showToast('Comment posted!');
+        }
+      });
+    }
+  }
+
+  // ==========================================================================
+  // PAGE 3: DASHBOARD OVERVIEW (dashboard.html)
+  // ==========================================================================
+  const dashboardTableBody = document.querySelector('#dashboard-table-body');
+  if (dashboardTableBody) {
+    const renderDashboard = () => {
+      const allPosts = window.store.getAllPosts();
+      const published = allPosts.filter(p => p.status === 'published');
+      const drafts = allPosts.filter(p => p.status === 'draft');
+      const totalViews = allPosts.reduce((sum, p) => sum + (p.views || 0), 0);
+
+      document.querySelector('#stat-total').textContent = allPosts.length;
+      document.querySelector('#stat-views').textContent = (totalViews > 1000 ? (totalViews / 1000).toFixed(1) + 'K' : totalViews);
+
+      if (allPosts.length === 0) {
+        dashboardTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--muted);">No blogs found.</td></tr>`;
+        return;
+      }
+
+      dashboardTableBody.innerHTML = allPosts.map(post => {
+        const catClass = getCatPillClass(post.category);
+        return `
+          <tr>
+            <td><strong><a href="post.html?id=${post.id}">${post.title}</a></strong></td>
+            <td><span class="pill-cat ${catClass}">${post.category}</span></td>
+            <td>${(post.views || 0).toLocaleString()}</td>
+            <td><span class="pill-status status-${post.status}">${post.status === 'published' ? 'Published' : 'Draft'}</span></td>
+            <td>${post.date}</td>
+            <td>
+              <a href="create-blog.html?id=${post.id}" class="icon-action-btn edit-action" title="Edit">✏️</a>
+              <button class="icon-action-btn delete-action delete-btn" data-id="${post.id}" title="Delete">🗑️</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      dashboardTableBody.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (confirm('Delete this blog post?')) {
+            window.store.deletePost(btn.dataset.id);
+            renderDashboard();
+            showToast('Blog deleted');
+          }
+        });
+      });
+    };
+
+    renderDashboard();
+  }
+
+  // ==========================================================================
+  // PAGE 4: PROFILE FORM (profile.html)
+  // ==========================================================================
+  const profileForm = document.querySelector('#profile-form');
+  if (profileForm) {
+    const user = window.store.getCurrentUser();
+    if (user) {
+      profileForm.elements.name.value = user.name || 'John Doe';
+      profileForm.elements.email.value = user.email || 'john.doe@example.com';
+      if (user.role) profileForm.elements.role.value = user.role;
+      if (user.bio) profileForm.elements.bio.value = user.bio;
+    }
+
+    profileForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const updatedUser = {
+        name: profileForm.elements.name.value.trim(),
+        email: profileForm.elements.email.value.trim(),
+        role: profileForm.elements.role.value.trim(),
+        bio: profileForm.elements.bio.value.trim(),
+        avatar: profileForm.elements.name.value.trim().split(' ').map(n=>n[0]).join('').toUpperCase(),
+        isLoggedIn: true
+      };
+      localStorage.setItem('blog_user', JSON.stringify(updatedUser));
+      document.querySelector('#profile-display-name').textContent = updatedUser.name;
+      document.querySelector('#profile-display-role').textContent = updatedUser.role;
+      document.querySelector('#profile-display-bio').textContent = updatedUser.bio;
+      showToast('Profile updated successfully!');
     });
   }
 
-  // Create post validation and live character counter.
+  // ==========================================================================
+  // PAGE 5: SETTINGS FORM (settings.html)
+  // ==========================================================================
+  const prefForm = document.querySelector('#preferences-form');
+  if (prefForm) {
+    prefForm.elements.theme.value = window.store.getTheme();
+    prefForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const selectedTheme = prefForm.elements.theme.value;
+      window.store.setTheme(selectedTheme);
+      updateThemeUI(selectedTheme);
+      showToast('Preferences saved!');
+    });
+  }
+
+  const secForm = document.querySelector('#security-form');
+  if (secForm) {
+    secForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      secForm.reset();
+      showToast('Password updated successfully!');
+    });
+  }
+
+  const notifForm = document.querySelector('#notifications-form');
+  if (notifForm) {
+    notifForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      showToast('Notification settings saved!');
+    });
+  }
+
+  // ==========================================================================
+  // PAGE 6: CREATE / EDIT BLOG (create-blog.html)
+  // ==========================================================================
   const createForm = document.querySelector('#create-blog-form');
   if (createForm) {
-    const title = createForm.elements.title;
-    const category = createForm.elements.category;
-    const content = createForm.elements.content;
-    const counter = document.querySelector('#char-count');
-    const updateCount = () => { counter.textContent = `${content.value.length.toLocaleString()} / 2,000`; };
-    content.addEventListener('input', updateCount);
-    createForm.addEventListener('reset', () => setTimeout(() => { clearErrors(createForm); updateCount(); createForm.querySelector('.publish-success').textContent = ''; }, 0));
-    createForm.addEventListener('submit', (event) => {
-      event.preventDefault();
-      clearErrors(createForm);
-      let valid = true;
-      if (!title.value.trim()) { setError(title, 'A blog title is required.'); valid = false; }
-      if (!category.value) { setError(category, 'Please select a category.'); valid = false; }
-      if (!content.value.trim()) { setError(content, 'Blog content cannot be empty.'); valid = false; }
-      else if (content.value.trim().length < 30) { setError(content, 'Write at least 30 characters before publishing.'); valid = false; }
-      if (valid) {
-        createForm.querySelector('.publish-success').textContent = 'Your blog post has been published successfully!';
-        document.querySelector('#save-status').textContent = 'Published';
-        alert('Success! Your blog post has been published.');
+    const params = new URLSearchParams(window.location.search);
+    const editId = params.get('id');
+    let uploadedImageData = null;
+
+    const titleInput = createForm.elements.title;
+    const categorySelect = createForm.elements.category;
+    const contentInput = createForm.elements.content;
+    const imageInput = createForm.elements.image;
+    const charCounter = document.querySelector('#char-count');
+    const pageHeader = document.querySelector('#editor-page-header');
+    const previewBox = document.querySelector('#image-preview-box');
+
+    if (contentInput) {
+      contentInput.addEventListener('input', () => {
+        charCounter.textContent = `${contentInput.value.length.toLocaleString()} chars`;
+      });
+    }
+
+    if (imageInput && previewBox) {
+      imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            uploadedImageData = event.target.result;
+            previewBox.style.backgroundImage = `url(${uploadedImageData})`;
+            previewBox.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    if (editId) {
+      const existing = window.store.getPostById(editId);
+      if (existing) {
+        if (pageHeader) pageHeader.textContent = 'Edit Blog';
+        titleInput.value = existing.title;
+        categorySelect.value = existing.category;
+        contentInput.value = existing.content.replace(/<[^>]*>?/gm, '');
+        uploadedImageData = existing.imageData;
+        if (uploadedImageData && previewBox) {
+          previewBox.style.backgroundImage = `url(${uploadedImageData})`;
+          previewBox.style.display = 'block';
+        }
       }
+    }
+
+    createForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      const category = categorySelect.value;
+      const content = contentInput.value.trim();
+      const isDraftSubmit = e.submitter && e.submitter.name === 'save-draft';
+
+      if (!title || !category || !content) {
+        alert('Please fill out all required fields.');
+        return;
+      }
+
+      window.store.savePost({
+        id: editId || null,
+        title: title,
+        category: category,
+        content: content.startsWith('<p>') ? content : `<p>${content.replace(/\n\n/g, '</p><p>')}</p>`,
+        status: isDraftSubmit ? 'draft' : 'published',
+        imageData: uploadedImageData
+      });
+
+      showToast(editId ? 'Blog updated!' : 'Blog published!');
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 600);
     });
   }
-
-  // Mobile sidebar on dashboard and editor pages.
-  const dashboardMenu = document.querySelector('.dashboard-menu');
-  const sidebar = document.querySelector('.sidebar');
-  if (dashboardMenu && sidebar) {
-    dashboardMenu.addEventListener('click', () => {
-      const isOpen = sidebar.classList.toggle('open');
-      dashboardMenu.setAttribute('aria-expanded', isOpen);
-    });
-  }
-
-  const year = document.querySelector('#current-year');
-  if (year) year.textContent = new Date().getFullYear();
 });
+
+function getCatPillClass(category) {
+  switch ((category || '').toLowerCase()) {
+    case 'travel': return 'cat-travel';
+    case 'lifestyle': return 'cat-lifestyle';
+    case 'technology': return 'cat-tech';
+    case 'food': return 'cat-food';
+    default: return 'cat-travel';
+  }
+}

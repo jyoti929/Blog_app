@@ -3,137 +3,205 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="My Blog - ideas, inspiration, and practical stories.">
-  <title>My Blog | Home</title>
+  <title>Blogify - Read. Write. Inspire.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+  <!-- Site Header -->
   <header class="site-header">
-    <nav class="navbar container" aria-label="Main navigation">
-      <a class="brand" href="index.html" aria-label="My Blog home"><span class="brand-mark">M</span>My Blog</a>
-      <button class="nav-toggle" type="button" aria-label="Toggle menu" aria-expanded="false" aria-controls="primary-nav">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="nav-links" id="primary-nav">
+    <nav class="navbar container">
+      <a class="brand" href="index.html">
+        <span class="brand-icon">📖</span> Blogify
+      </a>
+
+      <div class="nav-links">
         <a class="active" href="index.html">Home</a>
-        <a href="#latest-posts">Explore</a>
+        <a href="#categories">Categories</a>
+        <a href="dashboard.html">Dashboard</a>
         <a href="login.html">Login</a>
-        <a class="nav-cta" href="register.html">Register</a>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div class="search-input-box">
+          <span>🔍</span>
+          <input id="blog-search" type="search" placeholder="Search blogs..." autocomplete="off">
+        </div>
+
+        <button class="icon-btn theme-toggle-btn" title="Toggle Mode" style="width:36px; height:36px; border:1px solid var(--line); border-radius:8px;">🌙</button>
+        <a class="btn-green" href="login.html">Login</a>
       </div>
     </nav>
   </header>
 
-  <main>
-    <section class="hero-section">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <p class="eyebrow">A place for curious minds</p>
-          <h1>Stories that inspire your <span>next big idea.</span></h1>
-          <p class="hero-text">Explore thoughtful writing on design, technology, wellbeing, and the moments that shape us.</p>
-          <div class="hero-actions">
-            <a class="button button-primary" href="#latest-posts">Start reading <span aria-hidden="true">→</span></a>
-            <a class="button button-ghost" href="register.html">Join the community</a>
+  <main class="container">
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-copy">
+        <p class="hero-eyebrow">Welcome to Blogify</p>
+        <h1>Read. Write. Inspire.</h1>
+        <p>Discover amazing stories on technology, lifestyle, travel and more from our community of writers.</p>
+        <a href="#latest-posts" class="btn-green">Explore Blogs →</a>
+      </div>
+      <div class="hero-art">
+        <svg width="100%" height="240" viewBox="0 0 400 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Stylized Laptop & Coffee Graphic -->
+          <rect x="60" y="40" width="220" height="140" rx="12" fill="#1e293b"/>
+          <rect x="75" y="55" width="190" height="110" rx="6" fill="#ffffff"/>
+          <path d="M90 75H180M90 95H240M90 115H210M90 135H160" stroke="#10b981" stroke-width="6" stroke-linecap="round"/>
+          <rect x="30" y="180" width="280" height="12" rx="6" fill="#94a3b8"/>
+          <!-- Coffee Cup -->
+          <circle cx="320" cy="140" r="28" fill="#ffffff" stroke="#cbd5e1" stroke-width="4"/>
+          <circle cx="320" cy="140" r="20" fill="#78350f"/>
+          <!-- Plant -->
+          <path d="M340 60 C340 40, 360 40, 360 60 C360 80, 340 80, 340 60 Z" fill="#10b981"/>
+          <path d="M360 60 C360 40, 380 40, 380 60 C380 80, 360 80, 360 60 Z" fill="#059669"/>
+          <rect x="350" y="70" width="20" height="30" rx="4" fill="#d1fae5"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Latest Posts Section -->
+    <section id="latest-posts" style="margin-bottom:40px;">
+      <div class="section-header">
+        <h2>Latest Posts</h2>
+        <a class="view-all-link" href="#latest-posts">View All</a>
+      </div>
+
+      <p id="search-status" style="margin-bottom:16px; font-size:0.84rem; color:var(--muted);"></p>
+
+      <!-- Posts Cards Grid -->
+      <div class="posts-grid" id="blog-grid">
+        <!-- Rendered dynamically by js/script.js -->
+      </div>
+
+      <div class="empty-search" id="empty-search" hidden style="text-align:center; padding:60px 20px;">
+        <span style="font-size:2.5rem; color:var(--primary);">🔍</span>
+        <h3 style="margin-top:10px;">No articles found</h3>
+        <p style="color:var(--muted); font-size:0.88rem;">Try searching for another keyword or select a category below.</p>
+      </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section id="categories">
+      <div class="section-header">
+        <h2>Categories</h2>
+        <a class="view-all-link" href="#categories">View All</a>
+      </div>
+
+      <div class="categories-grid">
+        <div class="category-card" data-category="Technology">
+          <div class="category-icon-box icon-blue">💻</div>
+          <div>
+            <h4>Technology</h4>
+            <small>18 Posts</small>
           </div>
         </div>
-        <div class="hero-art" aria-hidden="true">
-          <div class="orb orb-one"></div><div class="orb orb-two"></div>
-          <div class="hero-note note-top">✦ Fresh ideas, daily</div>
-          <div class="hero-card">
-            <span class="hero-card-icon">✎</span>
-            <p>Make space for ideas that matter.</p>
-            <div class="hero-card-line"></div><div class="hero-card-line short"></div>
+
+        <div class="category-card" data-category="Lifestyle">
+          <div class="category-icon-box icon-purple">❤️</div>
+          <div>
+            <h4>Lifestyle</h4>
+            <small>15 Posts</small>
           </div>
-          <div class="hero-note note-bottom">Join 12k+ readers</div>
+        </div>
+
+        <div class="category-card" data-category="Travel">
+          <div class="category-icon-box icon-green">✈️</div>
+          <div>
+            <h4>Travel</h4>
+            <small>12 Posts</small>
+          </div>
+        </div>
+
+        <div class="category-card" data-category="Food">
+          <div class="category-icon-box icon-orange">☕</div>
+          <div>
+            <h4>Food</h4>
+            <small>8 Posts</small>
+          </div>
+        </div>
+
+        <div class="category-card" data-category="Business">
+          <div class="category-icon-box icon-blue">💼</div>
+          <div>
+            <h4>Business</h4>
+            <small>10 Posts</small>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="posts-section container" id="latest-posts">
-      <div class="section-heading">
+    <!-- Newsletter Card Banner -->
+    <section class="newsletter-card">
+      <div class="newsletter-left">
+        <div class="newsletter-icon">✉️</div>
         <div>
-          <p class="eyebrow">Find your next read</p>
-          <h2>Latest from the blog</h2>
+          <h3>Subscribe to our Newsletter</h3>
+          <p>Get the latest blog posts delivered to your inbox.</p>
         </div>
-        <label class="search-box" for="blog-search">
-          <span aria-hidden="true">⌕</span>
-          <input id="blog-search" type="search" placeholder="Search articles..." autocomplete="off">
-        </label>
       </div>
 
-      <p class="search-status" id="search-status" aria-live="polite"></p>
-      <div class="blog-grid" id="blog-grid">
-        <article class="blog-card" data-search="finding focus in a noisy world productivity wellbeing">
-          <div class="card-image image-focus"><span>01</span></div>
-          <div class="card-content">
-            <span class="tag tag-orange">Wellbeing</span>
-            <h3>Finding Focus in a Noisy World</h3>
-            <p>Small, practical rituals to protect your attention and create more meaningful work.</p>
-            <div class="card-meta"><span>Jun 12, 2026</span><span>6 min read</span></div>
-          </div>
-        </article>
-        <article class="blog-card" data-search="designing for delight design creativity user experience">
-          <div class="card-image image-design"><span>02</span></div>
-          <div class="card-content">
-            <span class="tag tag-purple">Design</span>
-            <h3>Designing for Delight, Not Just Usability</h3>
-            <p>The tiny details that turn a useful product into an experience people remember.</p>
-            <div class="card-meta"><span>Jun 08, 2026</span><span>8 min read</span></div>
-          </div>
-        </article>
-        <article class="blog-card" data-search="building better habits systems productivity growth">
-          <div class="card-image image-habits"><span>03</span></div>
-          <div class="card-content">
-            <span class="tag tag-green">Growth</span>
-            <h3>Build Better Habits With Tiny Systems</h3>
-            <p>Forget dramatic reinventions. Lasting change begins with a kinder, smaller plan.</p>
-            <div class="card-meta"><span>May 29, 2026</span><span>5 min read</span></div>
-          </div>
-        </article>
-        <article class="blog-card" data-search="the human side of artificial intelligence ai technology future">
-          <div class="card-image image-ai"><span>04</span></div>
-          <div class="card-content">
-            <span class="tag tag-blue">Technology</span>
-            <h3>The Human Side of Artificial Intelligence</h3>
-            <p>Why empathy, context, and good questions matter more than ever in the age of AI.</p>
-            <div class="card-meta"><span>May 21, 2026</span><span>7 min read</span></div>
-          </div>
-        </article>
-        <article class="blog-card" data-search="slow travel lessons from the coast travel lifestyle">
-          <div class="card-image image-travel"><span>05</span></div>
-          <div class="card-content">
-            <span class="tag tag-pink">Lifestyle</span>
-            <h3>Slow Travel: Lessons From the Coast</h3>
-            <p>A case for wandering without a checklist, and letting a place set the pace.</p>
-            <div class="card-meta"><span>May 15, 2026</span><span>4 min read</span></div>
-          </div>
-        </article>
-        <article class="blog-card" data-search="how to begin before you feel ready creativity writing motivation">
-          <div class="card-image image-writing"><span>06</span></div>
-          <div class="card-content">
-            <span class="tag tag-yellow">Creativity</span>
-            <h3>How to Begin Before You Feel Ready</h3>
-            <p>Permission to start imperfectly, learn in public, and follow the thread of curiosity.</p>
-            <div class="card-meta"><span>May 03, 2026</span><span>6 min read</span></div>
-          </div>
-        </article>
-      </div>
-      <div class="empty-search" id="empty-search" hidden>
-        <span>⌕</span><h3>No articles found</h3><p>Try a different word or browse all of our latest stories.</p>
-      </div>
+      <form class="newsletter-form" onsubmit="event.preventDefault(); showToast('Subscribed to newsletter!');">
+        <input type="email" placeholder="Enter your email" required>
+        <button class="btn-green" type="submit">Subscribe</button>
+      </form>
     </section>
-
   </main>
 
+  <!-- Footer -->
   <footer class="site-footer">
-    <div class="container footer-content">
-      <a class="brand" href="index.html"><span class="brand-mark">M</span>My Blog</a>
-      <p>Thoughtful stories for everyday curiosity.</p>
-      <p>© <span id="current-year"></span> My Blog. Made with care.</p>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <a class="brand" href="index.html" style="margin-bottom:12px;">
+            <span class="brand-icon">📖</span> Blogify
+          </a>
+          <p style="color:var(--muted); font-size:0.85rem; max-width:280px; margin-top:8px;">
+            Thoughtful stories and ideas from our global community of writers.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Categories</h4>
+          <ul>
+            <li><a href="#categories">Technology</a></li>
+            <li><a href="#categories">Lifestyle</a></li>
+            <li><a href="#categories">Travel</a></li>
+            <li><a href="#categories">Business</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Follow Us</h4>
+          <div class="social-icons">
+            <a href="#" title="Facebook">📘</a>
+            <a href="#" title="Twitter">🐦</a>
+            <a href="#" title="Instagram">📷</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2024 Blogify. All rights reserved.</span>
+        <a href="dashboard.html" style="color:var(--primary); font-weight:600;">Go to Dashboard →</a>
+      </div>
     </div>
   </footer>
+
+  <script src="js/store.js"></script>
   <script src="js/script.js"></script>
 </body>
 </html>

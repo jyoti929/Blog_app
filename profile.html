@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Author Profile | Blogify</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <!-- Left Sidebar Navigation -->
+    <aside class="dash-sidebar" id="sidebar">
+      <a href="create-blog.html" class="btn-green">+ New Blog</a>
+
+      <nav class="dash-menu">
+        <a class="dash-link" href="dashboard.html"><span>🏠</span> Dashboard</a>
+        <a class="dash-link" href="dashboard.html#recent-posts"><span>📑</span> My Blogs</a>
+        <a class="dash-link" href="index.html#categories"><span>📁</span> Categories</a>
+        <a class="dash-link" href="#comments"><span>💬</span> Comments</a>
+        <a class="dash-link active" href="profile.html"><span>👤</span> Profile</a>
+        <a class="dash-link" href="settings.html"><span>⚙️</span> Settings</a>
+        <a class="dash-link" href="login.html"><span>🚪</span> Logout</a>
+      </nav>
+
+      <!-- Bottom Quote Box -->
+      <div class="sidebar-quote-box">
+        <span>“</span>
+        <p>"The best way to predict the future is to create it."</p>
+        <small style="color:var(--primary); font-weight:600; display:block; margin-top:4px;">— Peter Drucker</small>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dash-main">
+      <header class="dash-header">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <button class="mobile-menu-toggle" style="font-size:1.2rem;" aria-label="Toggle Menu">☰</button>
+          <h1>Author Profile</h1>
+        </div>
+
+        <div class="user-profile-widget">
+          <button class="icon-btn" style="width:36px; height:36px; border:1px solid var(--line); border-radius:50%; position:relative;" title="Notifications">
+            🔔 <span class="badge-count" style="top:-2px; right:-2px;">1</span>
+          </button>
+          <button class="icon-btn theme-toggle-btn" style="width:36px; height:36px; border:1px solid var(--line); border-radius:50%;" title="Toggle Mode">🌙</button>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="author-avatar-circle" style="width:34px; height:34px; font-size:0.8rem;">JD</div>
+            <strong style="font-size:0.88rem; color:var(--ink);">John Doe ▾</strong>
+          </div>
+        </div>
+      </header>
+
+      <div class="dash-content">
+        <!-- Profile Overview Card -->
+        <div class="profile-card">
+          <div class="profile-header-banner">
+            <div class="profile-avatar-lg">JD</div>
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                <h2 style="font-size:1.5rem; font-weight:800;" id="profile-display-name">John Doe</h2>
+                <span class="pill-status status-published" style="font-size:0.7rem;">Verified Author</span>
+              </div>
+              <p style="color:var(--muted); font-size:0.88rem;" id="profile-display-role">Writer & Content Creator</p>
+              <p style="color:var(--ink-secondary); font-size:0.85rem; margin-top:6px;" id="profile-display-bio">Passionate writer exploring technology, lifestyle, and travel stories for Blogify.</p>
+            </div>
+            <a class="btn-green" href="create-blog.html">+ Create Story</a>
+          </div>
+
+          <!-- Edit Profile Form -->
+          <form id="profile-form">
+            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:20px;">Edit Profile Information</h3>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="profile-name">Full Name *</label>
+                <input id="profile-name" name="name" type="text" value="John Doe" required>
+              </div>
+
+              <div class="form-field">
+                <label for="profile-email">Email Address *</label>
+                <input id="profile-email" name="email" type="email" value="john.doe@example.com" required>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="profile-role">Title / Role</label>
+                <input id="profile-role" name="role" type="text" value="Writer & Content Creator">
+              </div>
+
+              <div class="form-field">
+                <label for="profile-location">Location</label>
+                <input id="profile-location" name="location" type="text" value="San Francisco, CA">
+              </div>
+            </div>
+
+            <div class="form-field" style="margin-bottom:20px;">
+              <label for="profile-bio">Bio / Tagline</label>
+              <textarea id="profile-bio" name="bio">Passionate writer exploring technology, lifestyle, and travel stories for Blogify.</textarea>
+            </div>
+
+            <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:14px;">Social Links & Website</h4>
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="profile-website">Website URL</label>
+                <input id="profile-website" name="website" type="url" value="https://johndoe.writer.com">
+              </div>
+
+              <div class="form-field">
+                <label for="profile-twitter">Twitter Handle</label>
+                <input id="profile-twitter" name="twitter" type="text" value="@johndoe_blogs">
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:24px;">
+              <button class="btn-green" type="submit">Save Profile Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>
