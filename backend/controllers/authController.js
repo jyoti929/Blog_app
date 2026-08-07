@@ -16,21 +16,23 @@ const generateToken = require('../utils/generateToken');
 const registerUser = async (req, res, next) => {
   try {
     console.log('[Registration Request] Received body:', req.body);
-    const { name, email, password } = req.body;
+    const { name, email, password, profileImage } = req.body;
 
     // 1. Validation: Ensure all required fields are provided
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'All fields (name, email, password) are required'
+        message: 'All required fields (name, email, password) must be provided'
       });
     }
 
-    // 2. Validation: Ensure password is at least 8 characters
-    if (password.length < 8) {
+    // 2. Server-side Password Policy Validation
+    const { validatePassword } = require('../utils/passwordValidator');
+    const pwdValidation = validatePassword(password);
+    if (!pwdValidation.valid) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 8 characters long'
+        message: pwdValidation.message
       });
     }
 
@@ -43,20 +45,20 @@ const registerUser = async (req, res, next) => {
       });
     }
 
-    // 4. Create new user record (Password is automatically hashed by pre-save hook in User model)
+    // 4. Create new user record (Password is automatically hashed by bcrypt in pre-save hook)
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      password
+      password,
+      profileImage: profileImage ? profileImage.trim() : ''
     });
 
-    console.log('[MongoDB Save] User document saved:', { id: user._id, email: user.email });
+    console.log('[MongoDB Save] User document saved successfully:', { id: user._id, email: user.email });
 
     // 5. Generate JWT token
     const token = generateToken(user._id);
-    console.log('[JWT Generation] Signed token created for user:', user._id);
 
-    // 6. Return success response
+    // 6. Return success response (201 Created)
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -65,11 +67,18 @@ const registerUser = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        profileImage: user.profileImage,
         createdAt: user.createdAt
       }
     });
 
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email address already exists'
+      });
+    }
     next(error);
   }
 };
@@ -114,16 +123,18 @@ const loginUser = async (req, res, next) => {
 
     // 4. Generate JWT Token
     const token = generateToken(user._id);
-    console.log('[JWT Generation] Signed token created for login:', user._id);
 
     // 5. Return success response with token and user info
     res.status(200).json({
       success: true,
+      message: 'Login successful',
       token,
       user: {
         _id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        profileImage: user.profileImage,
+        createdAt: user.createdAt
       }
     });
 

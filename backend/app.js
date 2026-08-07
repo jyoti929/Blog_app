@@ -9,6 +9,8 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const blogRoutes = require('./routes/blogRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const userRoutes = require('./routes/userRoutes');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 // Initialize Express App instance
@@ -17,11 +19,11 @@ const app = express();
 // 1. Enable Cross-Origin Resource Sharing (CORS) for Frontend connection
 app.use(cors());
 
-// 2. Body Parser Middleware to parse JSON payloads
-app.use(express.json());
+// 2. Body Parser Middleware to parse JSON payloads (50mb limit for base64 images)
+app.use(express.json({ limit: '50mb' }));
 
-// 3. Form Data Body Parser Middleware
-app.use(express.urlencoded({ extended: true }));
+// 3. Form Data Body Parser Middleware (50mb limit for large form payloads)
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // 4. Debug Request Logging Middleware
 app.use((req, res, next) => {
@@ -40,6 +42,8 @@ app.get('/api/health', (req, res) => {
 // 6. Mount API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/users', userRoutes);
 
 // 7. 404 Not Found Middleware Handler
 app.use(notFoundHandler);

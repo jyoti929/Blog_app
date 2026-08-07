@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!window.store) return;
 
   // Theme Initializer
-  const currentTheme = window.store.getTheme();
+  const currentTheme = typeof window.store.getTheme === 'function' ? window.store.getTheme() : 'light';
   document.documentElement.setAttribute('data-theme', currentTheme);
   
   const themeToggles = document.querySelectorAll('.theme-toggle-btn');
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   themeToggles.forEach(btn => {
     btn.addEventListener('click', () => {
-      const nextTheme = window.store.toggleTheme();
+      const nextTheme = typeof window.store.toggleTheme === 'function' ? window.store.toggleTheme() : 'light';
       updateThemeUI(nextTheme);
       showToast(`Switched to ${nextTheme} mode`);
     });
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Sync Current Logged-in User Header UI
-  const currentUser = window.store.getCurrentUser();
+  const currentUser = typeof window.store.getCurrentUser === 'function' ? window.store.getCurrentUser() : null;
   if (currentUser) {
     document.querySelectorAll('.author-avatar-circle').forEach(el => {
       el.textContent = currentUser.avatar || 'JD';
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btn.textContent.includes('Logout')) {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        window.store.logoutUser();
+        if (typeof window.store.logoutUser === 'function') window.store.logoutUser();
         showToast('Logged out');
         setTimeout(() => {
           window.location.href = 'login.html';
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bookmarks Badge Sync
   const updateBookmarkBadges = () => {
-    const bookmarks = window.store.getBookmarks();
+    const bookmarks = typeof window.store.getBookmarks === 'function' ? window.store.getBookmarks() : [];
     const badges = document.querySelectorAll('.badge-count');
     badges.forEach(b => {
       b.textContent = bookmarks.length;
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderBookmarkDrawer = () => {
       const listContainer = document.querySelector('#drawer-bookmarks-list');
-      const bIds = window.store.getBookmarks();
+      const bIds = typeof window.store.getBookmarks === 'function' ? window.store.getBookmarks() : [];
       const allPosts = window.store.getAllPosts();
       const bookmarkedPosts = allPosts.filter(p => bIds.includes(p.id));
 
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
       listContainer.querySelectorAll('.remove-bookmark-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const pId = btn.dataset.id;
-          window.store.toggleBookmark(pId);
+          if (typeof window.store.toggleBookmark === 'function') window.store.toggleBookmark(pId);
           updateBookmarkBadges();
           renderBookmarkDrawer();
           if (typeof renderHomePosts === 'function') renderHomePosts();
@@ -215,67 +215,168 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
+  // ==========================================================================
   // PAGE 1: HOME PAGE LOGIC (index.html)
   // ==========================================================================
   const blogGrid = document.querySelector('#blog-grid');
   if (blogGrid) {
     let activeCategory = 'All';
     let searchQuery = '';
+    let fetchError = null;
+    let masterBlogsList = []; // Master list of all published blogs from MongoDB
+
+    function highlightSearchText(text, query) {
+      if (!text || !query.trim()) return text || '';
+      const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${safeQuery})`, 'gi');
+      return text.replace(regex, '<mark style="background:#FDE047; color:#1E293B; border-radius:3px; padding:0 3px;">$1</mark>');
+    }
 
     const renderHomePosts = () => {
-      let posts = window.store.getPublishedPosts();
-
-      if (activeCategory !== 'All') {
-        posts = posts.filter(p => p.category.toLowerCase() === activeCategory.toLowerCase());
-      }
-
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        posts = posts.filter(p =>
-          p.title.toLowerCase().includes(query) ||
-          p.excerpt.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query)
-        );
-      }
-
+      const noticeBanner = document.querySelector('#category-fallback-notice');
       const emptyState = document.querySelector('#empty-search');
       const searchStatus = document.querySelector('#search-status');
 
-      if (searchStatus) {
-        searchStatus.textContent = (searchQuery || activeCategory !== 'All')
-          ? `Showing ${posts.length} blog${posts.length === 1 ? '' : 's'}`
-          : '';
+      // Use master list if available, fallback to store
+      const allBlogs = masterBlogsList.length > 0 ? masterBlogsList : ((window.store && typeof window.store.getAllPosts === 'function') ? window.store.getAllPosts() : []);
+
+      // Calculate live counts for all categories from MongoDB payload
+      const liveCounts = { All: allBlogs.length };
+      allBlogs.forEach(b => {
+        const cat = b.category || 'General';
+        liveCounts[cat] = (liveCounts[cat] || 0) + 1;
+      });
+      updateCategoryChipCounts(liveCounts);
+
+      // Determine posts to render based on Category & Fallback Logic
+      let postsToRender = [];
+      let isFallback = false;
+
+      if (activeCategory === 'All') {
+        postsToRender = [...allBlogs];
+        if (noticeBanner) noticeBanner.style.display = 'none';
+      } else {
+        const categoryMatches = allBlogs.filter(p => p.category && p.category.toLowerCase() === activeCategory.toLowerCase());
+        if (categoryMatches.length > 0) {
+          postsToRender = categoryMatches;
+          if (noticeBanner) noticeBanner.style.display = 'none';
+        } else {
+          // Intelligent Fallback: 0 blogs in this category -> Show ALL blogs & display notice banner!
+          postsToRender = [...allBlogs];
+          isFallback = true;
+          if (noticeBanner) {
+            noticeBanner.style.display = 'flex';
+            noticeBanner.innerHTML = `<span>ℹ️</span> No blogs found in <strong>"${activeCategory}"</strong> category. Showing all blogs instead.`;
+          }
+        }
       }
 
-      if (posts.length === 0) {
+      // Apply Search Filter if typed
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        postsToRender = postsToRender.filter(p => {
+          const titleMatch    = p.title && p.title.toLowerCase().includes(query);
+          const categoryMatch = p.category && p.category.toLowerCase().includes(query);
+          const descMatch     = p.shortDescription && p.shortDescription.toLowerCase().includes(query);
+          const contentMatch  = p.content && p.content.toLowerCase().includes(query);
+          const tagsMatch     = Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(query));
+          const authorName    = p.author ? (typeof p.author === 'object' ? p.author.name : p.author) : '';
+          const authorMatch   = authorName && authorName.toLowerCase().includes(query);
+
+          return titleMatch || categoryMatch || descMatch || contentMatch || tagsMatch || authorMatch;
+        });
+      }
+
+      // Update Search / Category Status Text
+      if (searchStatus) {
+        if (searchQuery) {
+          searchStatus.textContent = `Search results for "${searchQuery}" (${postsToRender.length} found)`;
+        } else if (isFallback) {
+          searchStatus.textContent = `Showing all ${postsToRender.length} published blogs (Category "${activeCategory}" is empty)`;
+        } else if (activeCategory !== 'All') {
+          searchStatus.textContent = `Showing ${postsToRender.length} blog${postsToRender.length === 1 ? '' : 's'} in "${activeCategory}"`;
+        } else {
+          searchStatus.textContent = `Showing all ${postsToRender.length} published blogs`;
+        }
+      }
+
+      if (fetchError) {
+        blogGrid.style.display = 'block';
+        if (emptyState) emptyState.hidden = true;
+        blogGrid.innerHTML = `
+          <div style="text-align:center; padding:50px 20px; background:var(--paper); border:1px solid var(--line); border-radius:12px;">
+            <div style="font-size:2rem; margin-bottom:10px;">⚠️</div>
+            <h3 style="font-size:1.1rem; font-weight:700; color:var(--ink);">Failed to Load Blogs</h3>
+            <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">${fetchError}</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Global Empty State (If MongoDB has 0 blogs overall or search returns 0)
+      if (postsToRender.length === 0) {
         blogGrid.style.display = 'none';
-        if (emptyState) emptyState.hidden = false;
+        if (emptyState) {
+          emptyState.hidden = false;
+          if (searchQuery.trim()) {
+            emptyState.innerHTML = `
+              <div style="font-size:2.5rem; color:var(--primary); margin-bottom:10px;">🔍</div>
+              <h3 style="font-size:1.2rem; font-weight:700; color:var(--ink);">No blogs match your search.</h3>
+              <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">Try searching for a different title, category, tag, or author name.</p>
+            `;
+          } else {
+            emptyState.innerHTML = `
+              <div style="font-size:2.5rem; color:var(--primary); margin-bottom:10px;">📝</div>
+              <h3 style="font-size:1.1rem; font-weight:700;">No blogs have been published yet.</h3>
+              <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">Check back later or log in to create and publish your first story!</p>
+            `;
+          }
+        }
         return;
       }
 
       blogGrid.style.display = 'grid';
       if (emptyState) emptyState.hidden = true;
 
-      blogGrid.innerHTML = posts.map(post => {
-        const bgStyle = post.imageData ? `background-image: url(${post.imageData})` : '';
+      // Render Blog Cards Grid
+      blogGrid.innerHTML = postsToRender.map(post => {
+        const bgUrl = post.imageUrl || post.coverImage || post.imageData || 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800';
+        const bgStyle = `background-image: url('${bgUrl}')`;
+        const rawAuthor = post.author ? (typeof post.author === 'object' ? post.author.name : post.author) : 'Anonymous';
+        const dateStr = post.createdAt ? new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : (post.date || 'Recent');
+        const rawShortDesc = post.shortDescription || (post.content ? post.content.replace(/<[^>]*>?/gm, '').substring(0, 130) + '...' : 'No description available.');
+        const blogId = post.id || post._id || '';
+
+        const displayTitle     = searchQuery ? highlightSearchText(post.title || 'Untitled Story', searchQuery) : (post.title || 'Untitled Story');
+        const displayCategory  = searchQuery ? highlightSearchText(post.category || 'General', searchQuery) : (post.category || 'General');
+        const displayAuthor    = searchQuery ? highlightSearchText(rawAuthor, searchQuery) : rawAuthor;
+        const displayShortDesc = searchQuery ? highlightSearchText(rawShortDesc, searchQuery) : rawShortDesc;
 
         return `
           <article class="post-card">
-            <div class="post-thumb ${post.imageClass || 'image-focus'}" style="${bgStyle}">
-              <span class="badge-tag">${post.category}</span>
+            <div class="post-thumb image-focus" style="${bgStyle}">
+              <span class="badge-tag">${displayCategory}</span>
             </div>
             <div class="post-content">
-              <h3><a href="post.html?id=${post.id}">${post.title}</a></h3>
-              <p>${post.excerpt}</p>
-              <div class="post-footer">
-                <div class="post-author">
-                  <div class="author-avatar-circle">${(post.author || 'JD').split(' ').map(n=>n[0]).join('')}</div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span class="pill-status status-${post.status || 'published'}" style="font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:12px; background:#DCFCE7; color:#059669;">
+                  ${(post.status || 'published').toUpperCase()}
+                </span>
+                <small style="color:var(--muted); font-size:0.75rem;">👁️ ${(post.views || 0).toLocaleString()} views</small>
+              </div>
+              <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:6px; line-height:1.3;">
+                <a href="blog-details.html?id=${blogId}">${displayTitle}</a>
+              </h3>
+              <p style="font-size:0.88rem; color:var(--muted); margin-bottom:14px; line-height:1.5;">${displayShortDesc}</p>
+              <div class="post-footer" style="padding-top:10px; border-top:1px solid var(--line);">
+                <div class="post-author" style="display:flex; align-items:center; gap:8px;">
+                  <div class="author-avatar-circle" style="width:30px; height:30px; font-size:0.75rem;">${rawAuthor.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0, 2)}</div>
                   <div>
-                    <span>${post.author}</span><br>
-                    <small style="color:var(--muted); font-weight:normal;">${post.date}</small>
+                    <span style="font-weight:600; font-size:0.82rem;">${displayAuthor}</span><br>
+                    <small style="color:var(--muted); font-weight:normal; font-size:0.74rem;">${dateStr}</small>
                   </div>
                 </div>
-                <span>⏱ ${post.readTime}</span>
+                <a href="blog-details.html?id=${blogId}" class="btn-green" style="padding:4px 12px; font-size:0.78rem;">Read Story →</a>
               </div>
             </div>
           </article>
@@ -283,25 +384,98 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
     };
 
-    const categoryCards = document.querySelectorAll('.category-card');
-    categoryCards.forEach(card => {
-      card.addEventListener('click', () => {
-        activeCategory = card.dataset.category || 'All';
+    // Helper function to update category chip counts
+    function updateCategoryChipCounts(counts = {}) {
+      const chipBtns = document.querySelectorAll('.cat-chip');
+      chipBtns.forEach(btn => {
+        const cat = btn.dataset.category || 'All';
+        const countSpan = btn.querySelector('.chip-count');
+        if (countSpan) {
+          const num = counts[cat] !== undefined ? counts[cat] : (cat === 'All' ? (counts['All'] || 0) : 0);
+          countSpan.textContent = `(${num})`;
+        }
+      });
+    }
+
+    // Backend Category Chips Click Handler
+    const catChips = document.querySelectorAll('.cat-chip, .category-card');
+    catChips.forEach(chip => {
+      chip.addEventListener('click', async () => {
+        activeCategory = chip.dataset.category || 'All';
+
+        // Visually highlight selected category chip
+        document.querySelectorAll('.cat-chip').forEach(c => {
+          if (c.dataset.category === activeCategory) c.classList.add('active');
+          else c.classList.remove('active');
+        });
+
+        // Scroll to latest posts section if category card clicked
         const section = document.querySelector('#latest-posts');
         if (section) section.scrollIntoView({ behavior: 'smooth' });
+
         renderHomePosts();
       });
     });
 
-    const searchInput = document.querySelector('#blog-search');
-    if (searchInput) {
-      searchInput.addEventListener('input', (e) => {
+    // Instant Backend Search Listener
+    const searchInputs = document.querySelectorAll('#blog-search, #globalSearch');
+    searchInputs.forEach(input => {
+      let debounceTimer = null;
+      input.addEventListener('input', (e) => {
         searchQuery = e.target.value;
-        renderHomePosts();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          if (searchQuery.trim()) {
+            try {
+              console.log(`[BlogSearch API] Querying GET /api/blogs?search=${encodeURIComponent(searchQuery)}...`);
+              const res = await fetch(`http://localhost:5000/api/blogs?search=${encodeURIComponent(searchQuery)}`);
+              if (res.ok) {
+                const data = await res.json();
+                if (data.success && window.store && typeof window.store.setPosts === 'function') {
+                  window.store.setPosts(data.data);
+                  if (data.categoryCounts) updateCategoryChipCounts(data.categoryCounts);
+                }
+              }
+            } catch (err) {
+              console.warn('[BlogSearch API Error]:', err.message);
+            }
+          }
+          renderHomePosts();
+        }, 150);
       });
-    }
+    });
 
-    renderHomePosts();
+    // Automatically fetch published blogs from GET /api/blogs on page load
+    (async () => {
+      if (blogGrid) {
+        blogGrid.style.display = 'block';
+        blogGrid.innerHTML = `
+          <div style="text-align:center; padding:60px 20px; color:var(--muted);">
+            <div style="font-size:1.8rem; margin-bottom:8px;">🔄</div>
+            <p style="font-size:0.9rem; font-weight:600;">Loading published blogs from server...</p>
+          </div>
+        `;
+      }
+
+      try {
+        const res = await fetch('http://localhost:5000/api/blogs');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data) {
+            masterBlogsList = data.data; // Cache master list from MongoDB
+            if (window.store && typeof window.store.setPosts === 'function') {
+              window.store.setPosts(data.data);
+            }
+            if (data.categoryCounts) updateCategoryChipCounts(data.categoryCounts);
+          }
+        }
+      } catch (err) {
+        console.error('[Homepage API Error]:', err.message);
+        fetchError = 'Could not connect to backend server at http://localhost:5000.';
+      }
+
+      renderHomePosts();
+    })();
   }
 
   // ==========================================================================
@@ -312,8 +486,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const postId = params.get('id') || 'post-1';
 
-    window.store.incrementViews(postId);
-    const post = window.store.getPostById(postId);
+    if (typeof window.store.incrementViews === 'function') window.store.incrementViews(postId);
+    const post = typeof window.store.getPostById === 'function' ? window.store.getPostById(postId) : null;
 
     if (!post) {
       articleContainer.innerHTML = `
@@ -324,8 +498,8 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     } else {
       document.title = `${post.title} | Blogify`;
-      const isBookmarked = window.store.isBookmarked(post.id);
-      const isLiked = window.store.isLiked(post.id);
+      const isBookmarked = typeof window.store.isBookmarked === 'function' ? window.store.isBookmarked(post.id) : false;
+      const isLiked = typeof window.store.isLiked === 'function' ? window.store.isLiked(post.id) : false;
       const bgStyle = post.imageData ? `background-image: url(${post.imageData})` : '';
 
       articleContainer.innerHTML = `
@@ -371,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const likeBtn = document.querySelector('#article-like-btn');
       likeBtn.addEventListener('click', () => {
-        const res = window.store.toggleLike(postId);
+        const res = typeof window.store.toggleLike === 'function' ? window.store.toggleLike(postId) : { liked: false, count: 0 };
         likeBtn.querySelector('span').textContent = res.liked ? '❤️' : '🤍';
         document.querySelector('#like-count').textContent = res.count;
         showToast(res.liked ? 'Liked article' : 'Unliked');
@@ -379,14 +553,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const bookmarkBtn = document.querySelector('#article-bookmark-btn');
       bookmarkBtn.addEventListener('click', () => {
-        const bookmarked = window.store.toggleBookmark(postId);
+        const bookmarked = typeof window.store.toggleBookmark === 'function' ? window.store.toggleBookmark(postId) : false;
         bookmarkBtn.querySelector('span').textContent = bookmarked ? '🔖' : '📑';
         updateBookmarkBadges();
         showToast(bookmarked ? 'Saved article' : 'Removed');
       });
 
       const renderComments = () => {
-        const comments = window.store.getComments(postId);
+        const comments = typeof window.store.getComments === 'function' ? window.store.getComments(postId) : [];
         document.querySelector('#comments-count').textContent = comments.length;
         const list = document.querySelector('#comments-list');
         if (comments.length === 0) {
@@ -409,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const input = document.querySelector('#comment-input');
         if (input.value.trim()) {
-          window.store.addComment(postId, input.value.trim());
+          if (typeof window.store.addComment === 'function') window.store.addComment(postId, input.value.trim());
           input.value = '';
           renderComments();
           showToast('Comment posted!');
@@ -465,6 +639,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
+    // dashboard section in script.js — only runs on old dashboard.html with #dashboard-table-body
+    // New dashboard.html uses dashboard.js directly — this block is harmless if element not found
     renderDashboard();
   }
 
@@ -584,31 +760,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Legacy create-blog form handler — this page now uses create-blog.js instead
+    // This block is intentionally left as a no-op guard so it doesn't submit via old savePost()
     createForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const title = titleInput.value.trim();
-      const category = categorySelect.value;
-      const content = contentInput.value.trim();
-      const isDraftSubmit = e.submitter && e.submitter.name === 'save-draft';
-
-      if (!title || !category || !content) {
-        alert('Please fill out all required fields.');
-        return;
-      }
-
-      window.store.savePost({
-        id: editId || null,
-        title: title,
-        category: category,
-        content: content.startsWith('<p>') ? content : `<p>${content.replace(/\n\n/g, '</p><p>')}</p>`,
-        status: isDraftSubmit ? 'draft' : 'published',
-        imageData: uploadedImageData
-      });
-
-      showToast(editId ? 'Blog updated!' : 'Blog published!');
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 600);
+      // create-blog.js handles this — do nothing here
+      // This prevents double-submission via script.js
     });
   }
 });

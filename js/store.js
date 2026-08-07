@@ -1,111 +1,186 @@
 /**
  * ==========================================================================
- * BLOGIFY DATA STORE (js/store.js)
- * Interacts with Backend REST API (http://localhost:5000/api/blogs)
+ * CENTRALIZED STORE & BACKEND REST API BRIDGE (js/store.js)
+ * Connects Frontend to REST API Endpoints with Bearer JWT Authentication
  * ==========================================================================
  */
 
-const API_BLOGS_URL = 'http://localhost:5000/api/blogs';
+const STORE_API_BASE  = 'http://localhost:5000/api';
+const STORE_BLOGS_URL = `${STORE_API_BASE}/blogs`;
 
 window.store = {
-  // In-memory cache for fast UI rendering
   cachedPosts: [],
 
-  // Get Auth Bearer Headers
+  // ── Auth Headers ───────────────────────────────────────────
   getHeaders() {
-    const token = localStorage.getItem('authToken');
-    const headers = {
-      'Content-Type': 'application/json'
-    };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    const token   = localStorage.getItem('authToken');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    console.log('[Store] getHeaders() → token present:', Boolean(token));
     return headers;
   },
 
-  // Fetch all posts from Backend API: GET /api/blogs
+  // ── GET /api/blogs ─────────────────────────────────────────
   async fetchAllPosts() {
     try {
-      const response = await fetch(API_BLOGS_URL, {
-        method: 'GET',
-        headers: this.getHeaders()
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch posts from backend');
+      console.log('[Store] fetchAllPosts() → calling GET', STORE_BLOGS_URL);
+      const response = await fetch(STORE_BLOGS_URL);
+      console.log('[Store] fetchAllPosts() → HTTP status:', response.status);
 
       const result = await response.json();
-      if (result.success && Array.isArray(result.data)) {
-        // Map backend document to frontend post schema
-        this.cachedPosts = result.data.map(p => ({
-          id: p._id,
-          title: p.title,
-          content: p.content,
-          category: p.category || 'General',
-          imageData: p.imageUrl || '',
-          status: p.status || 'published',
-          views: p.views || 0,
-          date: new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-          author: p.author ? p.author.name : 'Author'
-        }));
+      console.log('[Store] fetchAllPosts() → raw response:', result);
+
+      if (!response.ok) {
+        console.error('[Store] fetchAllPosts() → ❌ HTTP error', response.status, result.message);
         return this.cachedPosts;
       }
+
+      if (!result.success) {
+        console.error('[Store] fetchAllPosts() → ❌ success=false:', result.message);
+        return this.cachedPosts;
+      }
+
+      if (!Array.isArray(result.data)) {
+        console.error('[Store] fetchAllPosts() → ❌ result.data is not an array:', result.data);
+        return this.cachedPosts;
+      }
+
+      this.cachedPosts = result.data.map(p => ({
+        id:        p._id  || p.id,
+        _id:       p._id  || p.id,
+        title:     p.title,
+        content:   p.content,
+        category:  p.category  || 'General',
+        imageUrl:  p.imageUrl  || p.coverImage || '',
+        imageData: p.imageUrl  || p.coverImage || '',
+        status:    p.status    || 'published',
+        theme:     p.theme     || 'theme-01',
+        template:  p.template  || 'blank',
+        tags:      p.tags      || [],
+        views:     p.views     || 0,
+        author:    p.author    ? (typeof p.author === 'object' ? p.author.name : p.author) : 'Anonymous',
+        date:      p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+        createdAt: p.createdAt || new Date().toISOString()
+      }));
+
+      console.log(`[Store] fetchAllPosts() → ✅ Cached ${this.cachedPosts.length} posts.`);
+      return this.cachedPosts;
+
     } catch (err) {
-      console.warn('[Store API Error] Could not fetch posts from backend, using cache or fallback:', err.message);
+      console.error('[Store] fetchAllPosts() → ❌ Network/fetch error:', err.message);
+      console.error('        → Is the backend running at http://localhost:5000 ?');
+      return this.cachedPosts;
     }
+  },
+
+  // ── Cache Setter ───────────────────────────────────────────
+  setPosts(posts) {
+    if (!Array.isArray(posts)) return this.cachedPosts;
+    this.cachedPosts = posts.map(p => ({
+      id:        p._id  || p.id,
+      _id:       p._id  || p.id,
+      title:     p.title,
+      content:   p.content,
+      category:  p.category  || 'General',
+      imageUrl:  p.imageUrl  || p.coverImage || '',
+      imageData: p.imageUrl  || p.coverImage || '',
+      status:    p.status    || 'published',
+      theme:     p.theme     || 'theme-01',
+      template:  p.template  || 'blank',
+      tags:      p.tags      || [],
+      views:     p.views     || 0,
+      author:    p.author    ? (typeof p.author === 'object' ? p.author.name : p.author) : 'Anonymous',
+      date:      p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+      createdAt: p.createdAt || new Date().toISOString()
+    }));
     return this.cachedPosts;
   },
 
-  // Synchronous Getter returning cached or fallback posts
+  // ── Synchronous cache getter ────────────────────────────────
   getAllPosts() {
     return this.cachedPosts;
   },
 
-  // Create post via Backend API: POST /api/blogs
+  // ── POST /api/blogs ────────────────────────────────────────
   async createPost(postData) {
     try {
-      const response = await fetch(API_BLOGS_URL, {
-        method: 'POST',
-        headers: this.getHeaders(),
-        body: JSON.stringify({
-          title: postData.title,
-          content: postData.content,
-          category: postData.category,
-          imageUrl: postData.imageData || postData.imageUrl,
-          status: postData.status || 'published'
-        })
+      const headers = this.getHeaders();
+      console.log('[Store] createPost() → Authorization header present:', Boolean(headers['Authorization']));
+
+      const payload = {
+        title:      postData.title,
+        content:    postData.content,
+        category:   postData.category,
+        coverImage: postData.coverImage || postData.imageData || postData.imageUrl || '',
+        imageUrl:   postData.coverImage || postData.imageData || postData.imageUrl || '',
+        status:     postData.status     || 'published',
+        tags:       Array.isArray(postData.tags) ? postData.tags : [],
+        template:   postData.template   || 'blank',
+        theme:      postData.theme      || 'theme-01'
+      };
+      console.log('[Store] createPost() → payload to send:', { ...payload, coverImage: payload.coverImage ? '[image data present]' : 'none' });
+
+      const response = await fetch(STORE_BLOGS_URL, {
+        method:  'POST',
+        headers,
+        body:    JSON.stringify(payload)
       });
 
+      console.log('[Store] createPost() → HTTP status:', response.status);
       const result = await response.json();
+      console.log('[Store] createPost() → backend response:', result);
+
       if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to create blog post');
+        const msg = result.message || `HTTP ${response.status}`;
+        console.error('[Store] createPost() → ❌ Failed:', msg);
+        return { success: false, message: msg };
       }
 
+      // Re-fetch to update cache with the newly saved blog
       await this.fetchAllPosts();
-      return { success: true, data: result.data };
+      console.log('[Store] createPost() → ✅ Blog saved. Cache refreshed.');
+      return { success: true, message: result.message || 'Blog published successfully.', blog: result.blog || result.data };
+
     } catch (err) {
-      console.error('[Store API Error] Failed to create post:', err.message);
+      console.error('[Store] createPost() → ❌ Network/fetch error:', err.message);
       return { success: false, message: err.message };
     }
   },
 
-  // Delete post via Backend API: DELETE /api/blogs/:id
-  async deletePost(id) {
+  // ── GET /api/dashboard/analytics ───────────────────────────
+  async fetchAnalytics() {
     try {
-      const response = await fetch(`${API_BLOGS_URL}/${id}`, {
-        method: 'DELETE',
+      console.log('[Store] fetchAnalytics() → calling GET /api/dashboard/analytics');
+      const response = await fetch(`${STORE_API_BASE}/dashboard/analytics`, {
         headers: this.getHeaders()
       });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        console.log('[Store] fetchAnalytics() → ✅ Analytics data received:', result);
+        return result;
+      }
+    } catch (err) {
+      console.error('[Store] fetchAnalytics() → ❌ Error:', err.message);
+    }
+    return null;
+  },
 
+  // ── DELETE /api/blogs/:id ──────────────────────────────────
+  async deletePost(id) {
+    try {
+      const response = await fetch(`${STORE_BLOGS_URL}/${id}`, {
+        method:  'DELETE',
+        headers: this.getHeaders()
+      });
       const result = await response.json();
       if (!response.ok || !result.success) {
         throw new Error(result.message || 'Failed to delete blog post');
       }
-
-      // Filter out deleted post from local cache
-      this.cachedPosts = this.cachedPosts.filter(p => p.id !== id);
+      this.cachedPosts = this.cachedPosts.filter(p => p.id !== id && p._id !== id);
+      console.log('[Store] deletePost() → ✅ Deleted post', id);
       return { success: true };
     } catch (err) {
-      console.error('[Store API Error] Failed to delete post:', err.message);
+      console.error('[Store] deletePost() → ❌ Error:', err.message);
       return { success: false, message: err.message };
     }
   }

@@ -3,87 +3,391 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Blog | Blogify</title>
+  <title>Create Blog | Blogify Studio</title>
+
+  <!-- Google Fonts: Poppins, Inter, Roboto, Open Sans, Lora, Playfair Display -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@600;800&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Core Dashboard & Studio Stylesheets -->
   <link rel="stylesheet" href="css/style.css">
-  <!-- Reusable Auth Manager (Route Protection) -->
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/create-blog.css">
+  <script src="js/theme.js"></script>
+
+  <!-- Auth Route Protection -->
   <script src="js/auth.js"></script>
   <script>Auth.checkAuth();</script>
 </head>
 <body>
 
-  <!-- Site Header -->
-  <header class="site-header">
-    <nav class="navbar container">
-      <a class="brand" href="index.html">
-        <span class="brand-icon">📖</span> Blogify
+  <!-- Mobile Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Full App Container -->
+  <div class="app-container page-fade-in">
+
+    <!-- Reused Fixed Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-logo" href="index.html">
+        <span class="sidebar-logo-icon">📖</span> Blogify
       </a>
 
-      <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="dashboard.html">Dashboard</a>
+      <div class="sidebar-menu-label">Main Navigation</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="dashboard.html">
+          <span class="nav-icon">🏠</span> Dashboard
+        </a>
+        <a class="nav-item" href="my-blogs.html">
+          <span class="nav-icon">📑</span> My Blogs
+        </a>
+        <a class="nav-item active" href="create-blog.html">
+          <span class="nav-icon">✍️</span> Create Blog
+        </a>
+        <a class="nav-item" href="dashboard.html#analytics">
+          <span class="nav-icon">📊</span> Analytics
+        </a>
+        <a class="nav-item" href="profile.html">
+          <span class="nav-icon">👤</span> Profile
+        </a>
+        <a class="nav-item" href="settings.html">
+          <span class="nav-icon">⚙️</span> Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="logout-btn" id="logoutBtn">
+          <span class="nav-icon">🚪</span> Logout
+        </button>
       </div>
+    </aside>
 
-      <button class="icon-btn theme-toggle-btn" title="Toggle Mode" style="width:36px; height:36px; border:1px solid var(--line); border-radius:8px;">🌙</button>
-    </nav>
-  </header>
-
-  <main class="container" style="padding:40px 0 60px;">
-    <div style="max-width:760px; margin:0 auto; background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); padding:36px; box-shadow:var(--shadow-md);">
-      <div style="margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <a href="dashboard.html" style="color:var(--muted); font-size:0.82rem; font-weight:500;">← Back to Dashboard</a>
-          <h1 id="editor-page-header" style="font-size:1.6rem; font-weight:800; margin-top:4px;">Create New Blog</h1>
-        </div>
-        <span class="badge-tag" style="background:var(--primary-light); color:var(--primary);">Blogify Editor</span>
-      </div>
-
-      <form id="create-blog-form" novalidate>
-        <div style="margin-bottom:20px;">
-          <label for="blog-title" style="display:block; font-size:0.84rem; font-weight:700; margin-bottom:6px;">Blog Title *</label>
-          <input id="blog-title" name="title" type="text" placeholder="Enter post title..." style="width:100%; height:44px; border:1px solid var(--line); border-radius:8px; padding:0 14px; background:var(--canvas); outline:none;" required>
+    <!-- Main Content Wrapper & Sticky Top Navbar -->
+    <div class="main-wrapper">
+      <header class="top-navbar">
+        <div class="navbar-left">
+          <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle Menu">☰</button>
+          <h1 class="page-title">Create Blog Studio</h1>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
-          <div>
-            <label for="blog-category" style="display:block; font-size:0.84rem; font-weight:700; margin-bottom:6px;">Category *</label>
-            <select id="blog-category" name="category" style="width:100%; height:44px; border:1px solid var(--line); border-radius:8px; padding:0 14px; background:var(--canvas); outline:none;" required>
-              <option value="">Select Category</option>
-              <option value="Travel">Travel</option>
-              <option value="Lifestyle">Lifestyle</option>
-              <option value="Technology">Technology</option>
-              <option value="Food">Food</option>
-              <option value="Business">Business</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="blog-image" style="display:block; font-size:0.84rem; font-weight:700; margin-bottom:6px;">Cover Photo</label>
-            <input id="blog-image" name="image" type="file" accept="image/*" style="width:100%; height:44px; border:1px solid var(--line); border-radius:8px; padding:8px 14px; background:var(--canvas); outline:none;">
+        <div class="navbar-center">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="globalSearch" placeholder="Search studio..." autocomplete="off">
           </div>
         </div>
 
-        <div id="image-preview-box" style="display:none; height:140px; border-radius:8px; background-size:cover; background-position:center; margin-bottom:20px; border:1px solid var(--line);"></div>
+        <div class="navbar-right">
+          <button class="icon-button" title="Notifications">
+            🔔
+            <span class="notification-badge"></span>
+          </button>
+          <button class="icon-button theme-toggle-btn" id="themeToggleBtn" title="Toggle Mode">🌙</button>
 
-        <div style="margin-bottom:24px;">
-          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <label for="blog-content" style="font-size:0.84rem; font-weight:700;">Blog Content *</label>
-            <span id="char-count" style="font-size:0.75rem; color:var(--muted);">0 chars</span>
+          <a href="profile.html" class="user-profile-btn">
+            <div class="avatar-img" id="userAvatar">JD</div>
+            <div class="user-name" id="userDisplayName">John Doe ▾</div>
+          </a>
+        </div>
+      </header>
+
+      <!-- Dashboard Content Body -->
+      <main class="dashboard-body">
+
+        <!-- 1. Large Colorful Hero Banner with Animated Gradient -->
+        <section class="create-hero-banner">
+          <div class="floating-shape-1"></div>
+          <div class="floating-shape-2"></div>
+
+          <div class="create-hero-content">
+            <div class="hero-sparkle-badge">
+              <span>✨</span> INSTANT PUBLISHING STUDIO
+            </div>
+            <h1>✨ Create Your Next Amazing Blog</h1>
+            <p>Share your ideas with the world and inspire thousands of readers.</p>
           </div>
-          <textarea id="blog-content" name="content" placeholder="Write your blog story here..." style="width:100%; min-height:240px; border:1px solid var(--line); border-radius:8px; padding:14px; background:var(--canvas); outline:none; line-height:1.6;" required></textarea>
-        </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:12px;">
-          <button class="btn-green" type="submit" name="save-draft" style="background:var(--paper); border:1px solid var(--line); color:var(--ink) !important; box-shadow:none;">Save as Draft</button>
-          <button class="btn-green" type="submit" name="publish-post">Publish Blog →</button>
-        </div>
-      </form>
+          <div class="hero-illustration-box">
+            <span>✍️</span>
+          </div>
+        </section>
+
+        <!-- 2. Choose Blog Template Section -->
+        <section class="template-section">
+          <div class="template-section-header">
+            <h2><span>🎨</span> Choose a Blog Template</h2>
+            <span style="font-size:0.8rem; color:var(--muted); font-weight:600;">Click to pre-fill editor</span>
+          </div>
+
+          <div class="template-grid">
+            <div class="tmpl-card tmpl-tech">
+              <div>
+                <div class="tmpl-icon-box">💻</div>
+                <h3>Technology</h3>
+                <p>System architecture, dev trends & engineering guides.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-tech">Use Template →</button>
+            </div>
+
+            <div class="tmpl-card tmpl-travel">
+              <div>
+                <div class="tmpl-icon-box">✈️</div>
+                <h3>Travel</h3>
+                <p>Destination itineraries, alpine guides & hidden gems.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-travel">Use Template →</button>
+            </div>
+
+            <div class="tmpl-card tmpl-food">
+              <div>
+                <div class="tmpl-icon-box">🍔</div>
+                <h3>Food Recipe</h3>
+                <p>Step-by-step culinary guides & ingredients.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-food">Use Template →</button>
+            </div>
+
+            <div class="tmpl-card tmpl-business">
+              <div>
+                <div class="tmpl-icon-box">💼</div>
+                <h3>Business</h3>
+                <p>SaaS metrics, market analysis & founder guides.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-business">Use Template →</button>
+            </div>
+
+            <div class="tmpl-card tmpl-lifestyle">
+              <div>
+                <div class="tmpl-icon-box">🎨</div>
+                <h3>Lifestyle</h3>
+                <p>Daily routines, wellness practices & focus habits.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-lifestyle">Use Template →</button>
+            </div>
+
+            <div class="tmpl-card tmpl-ai">
+              <div>
+                <div class="tmpl-icon-box">🤖</div>
+                <h3>AI & ML</h3>
+                <p>Neural networks, transformer models & deep learning.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-ai">Use Template →</button>
+            </div>
+
+            <div class="tmpl-card tmpl-tutorial">
+              <div>
+                <div class="tmpl-icon-box">📚</div>
+                <h3>Tutorial</h3>
+                <p>Step-by-step developer guides & setup code.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-tutorial">Use Template →</button>
+            </div>
+
+            <div class="tmpl-card tmpl-news">
+              <div>
+                <div class="tmpl-icon-box">📰</div>
+                <h3>News Article</h3>
+                <p>Industry news, editorial opinion & press coverage.</p>
+              </div>
+              <button type="button" class="btn-tmpl-action" data-tmpl="tmpl-news">Use Template →</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. COMPACT VISUAL THEME SELECTION SECTION -->
+        <section class="theme-section">
+          <div style="margin-bottom:12px;">
+            <h2 style="font-size:1.3rem; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:8px;">
+              <span>🎨</span> Choose Theme
+            </h2>
+            <p style="font-size:0.84rem; color:var(--muted); margin-top:2px;">Choose a beautiful appearance for your blog before publishing.</p>
+          </div>
+
+          <div class="theme-grid-visual" id="theme-grid-visual">
+            <!-- Dynamically rendered by js/create-blog.js -->
+          </div>
+        </section>
+
+        <!-- 4. Single Clean & Premium Writing Card -->
+        <form id="create-blog-form" novalidate>
+          <div class="simple-editor-card">
+            
+            <!-- 1. Blog Title -->
+            <div class="editor-field-row">
+              <label for="blog-title" class="field-label-clean">Blog Title *</label>
+              <input id="blog-title" name="title" type="text" class="title-input-large" placeholder="Enter an engaging story title..." required>
+            </div>
+
+            <!-- 2. Category -->
+            <div class="editor-field-row">
+              <label for="blog-category" class="field-label-clean">Category *</label>
+              <select id="blog-category" name="category" class="category-select-clean" required>
+                <option value="">Select Category</option>
+                <option value="Technology">💻 Technology</option>
+                <option value="Travel">✈️ Travel</option>
+                <option value="Lifestyle">🎨 Lifestyle</option>
+                <option value="Food">🍔 Food</option>
+                <option value="Business">💼 Business</option>
+                <option value="General" selected>📝 General</option>
+              </select>
+            </div>
+
+            <!-- 3. Featured Image Upload -->
+            <div class="editor-field-row">
+              <label class="field-label-clean">Featured Cover Image</label>
+              
+              <div class="image-upload-area" id="image-upload-area" onclick="document.getElementById('blog-image-file').click();">
+                <input id="blog-image-file" type="file" accept="image/*" style="display:none;">
+                <div class="upload-icon-circle">📸</div>
+                <div class="upload-text-bold">Drag & drop cover photo here, or <span style="color:#10B981; text-decoration:underline;">browse files</span></div>
+                <div class="upload-subtext">PNG, JPG, WEBP formats supported up to 5MB</div>
+              </div>
+
+              <div class="cover-preview-box" id="cover-preview-box" style="display:none;">
+                <img id="cover-preview-img" src="" alt="Cover Photo Preview">
+                <div class="cover-btn-overlay">
+                  <button type="button" class="btn-cover-action" id="replace-cover-btn">🔄 Replace Image</button>
+                  <button type="button" class="btn-cover-action" id="remove-cover-btn" style="background:#EF4444;">🗑️ Remove</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Story Content Rich Text Editor & Sticky Toolbar -->
+            <div class="editor-field-row">
+              <label class="field-label-clean">Story Content *</label>
+
+              <!-- Modern Floating Rich Text Toolbar -->
+              <div class="rich-toolbar" id="rich-toolbar">
+                
+                <!-- 📑 Headings Selector -->
+                <select class="tb-select" id="fmt-heading" title="Headings">
+                  <option value="p">Normal Text</option>
+                  <option value="h1">Heading 1</option>
+                  <option value="h2">Heading 2</option>
+                  <option value="h3">Heading 3</option>
+                </select>
+
+                <!-- 🔤 Font Family Selector -->
+                <select class="tb-select" id="fmt-font-family" title="Font Family">
+                  <option value="Poppins">Poppins</option>
+                  <option value="Inter">Inter</option>
+                  <option value="Roboto">Roboto</option>
+                  <option value="Open Sans">Open Sans</option>
+                  <option value="Lora">Lora</option>
+                  <option value="Playfair Display">Playfair Display</option>
+                </select>
+
+                <!-- 🔤 Font Size Selector -->
+                <select class="tb-select" id="fmt-font-size" title="Font Size">
+                  <option value="1">12px</option>
+                  <option value="2">14px</option>
+                  <option value="3" selected>16px</option>
+                  <option value="4">18px</option>
+                  <option value="5">20px</option>
+                  <option value="6">24px</option>
+                  <option value="7">32px</option>
+                </select>
+
+                <div class="tb-divider"></div>
+
+                <!-- 📝 Text Formatting Buttons -->
+                <button type="button" class="tb-btn" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+                <button type="button" class="tb-btn" data-cmd="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+                <button type="button" class="tb-btn" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+                <button type="button" class="tb-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+
+                <div class="tb-divider"></div>
+
+                <!-- 🎨 Color Pickers -->
+                <div class="tb-color-wrapper" title="Text Color">
+                  <span style="font-size:0.75rem; font-weight:700;">🎨</span>
+                  <input type="color" class="tb-color-input" id="fmt-text-color" value="#0F172A">
+                </div>
+
+                <div class="tb-color-wrapper" title="Highlight Color">
+                  <span style="font-size:0.75rem; font-weight:700;">🖌️</span>
+                  <input type="color" class="tb-color-input" id="fmt-bg-color" value="#FEF08A">
+                </div>
+
+                <div class="tb-divider"></div>
+
+                <!-- 📋 Alignment Buttons -->
+                <button type="button" class="tb-btn" data-cmd="justifyLeft" title="Align Left">⬅️</button>
+                <button type="button" class="tb-btn" data-cmd="justifyCenter" title="Align Center">↔️</button>
+                <button type="button" class="tb-btn" data-cmd="justifyRight" title="Align Right">➡️</button>
+                <button type="button" class="tb-btn" data-cmd="justifyFull" title="Justify Text">☰</button>
+
+                <div class="tb-divider"></div>
+
+                <!-- 📌 Lists -->
+                <button type="button" class="tb-btn" data-cmd="insertUnorderedList" title="Bullet List">• List</button>
+                <button type="button" class="tb-btn" data-cmd="insertOrderedList" title="Numbered List">1. List</button>
+                <button type="button" class="tb-btn" data-cmd="insertChecklist" title="Checklist">☑ Check</button>
+
+                <div class="tb-divider"></div>
+
+                <!-- 🔗 Insert Elements -->
+                <button type="button" class="tb-btn" data-cmd="createLink" title="Insert Link">🔗</button>
+                <button type="button" class="tb-btn" data-cmd="insertImage" title="Insert Image">🖼️</button>
+                <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="blockquote" title="Quote">”</button>
+                <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="pre" title="Code Block">&lt;/&gt;</button>
+                <button type="button" class="tb-btn" data-cmd="insertHorizontalRule" title="Horizontal Line">―</button>
+
+                <div class="tb-divider"></div>
+
+                <!-- ↩ History & Clear -->
+                <button type="button" class="tb-btn" data-cmd="undo" title="Undo (Ctrl+Z)">↩</button>
+                <button type="button" class="tb-btn" data-cmd="redo" title="Redo (Ctrl+Y)">↪</button>
+                <button type="button" class="tb-btn" data-cmd="removeFormat" title="Clear Formatting">🧹</button>
+
+              </div>
+
+              <!-- Contenteditable Rich Text Editor Surface -->
+              <div id="blog-content-editor" contenteditable="true" class="content-editor-rich" placeholder="Tell your story... Write engaging paragraphs, thoughts, or technical tutorials here."></div>
+
+              <!-- Hidden Textarea synced for payload submission -->
+              <textarea id="blog-content" name="content" style="display:none;"></textarea>
+            </div>
+
+            <!-- 5. Tags -->
+            <div class="editor-field-row" style="margin-bottom:0;">
+              <label for="tag-input-field" class="field-label-clean">Tags (Press Enter or Comma)</label>
+              <div class="tags-wrapper" id="tags-container">
+                <input type="text" id="tag-input-field" class="tag-input-field" placeholder="Add tag...">
+              </div>
+            </div>
+
+            <!-- 6. Action Buttons -->
+            <div class="action-buttons-bar">
+              <button type="submit" name="save-draft" class="btn-action-draft">Save Draft</button>
+              <button type="button" class="btn-action-preview" id="btn-preview">👁️ Preview</button>
+              <button type="submit" id="btn-publish" name="publish-post" class="btn-action-publish">Publish Blog →</button>
+            </div>
+
+          </div>
+        </form>
+
+      </main>
     </div>
-  </main>
+  </div>
 
+  <!-- Live Preview Modal Overlay -->
+  <div class="preview-modal-overlay" id="previewModalOverlay">
+    <div class="preview-card-frame">
+      <div class="preview-top-bar">
+        <strong style="font-size:1.05rem; color:#0F172A;">✨ Live Story Preview</strong>
+        <button type="button" id="close-preview-btn" style="font-size:1.4rem; cursor:pointer; border:none; background:none; color:#64748B;">&times;</button>
+      </div>
+
+      <div class="preview-body-content" id="preview-body-content">
+        <!-- Rendered dynamically by js/create-blog.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Controllers -->
   <script src="js/store.js"></script>
-  <script src="js/script.js"></script>
+  <script src="js/create-blog.js"></script>
 </body>
 </html>

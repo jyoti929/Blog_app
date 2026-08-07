@@ -10,6 +10,7 @@ const router = express.Router();
 const {
   createBlog,
   getAllBlogs,
+  getMyBlogs,
   getBlogById,
   updateBlog,
   deleteBlog
@@ -22,6 +23,13 @@ const { protect } = require('../middleware/authMiddleware');
  * @access  Public
  */
 router.get('/', getAllBlogs);
+
+/**
+ * @route   GET /api/blogs/myblogs
+ * @desc    Get logged-in user's blog posts only
+ * @access  Private (Protected by JWT)
+ */
+router.get('/myblogs', protect, getMyBlogs);
 
 /**
  * @route   GET /api/blogs/:id

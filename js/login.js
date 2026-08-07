@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordInput = document.getElementById('login-password') || document.getElementById('password');
   const errorMsg = document.getElementById('errorMessage');
 
+  const toggleLoginPassword = document.getElementById('toggleLoginPassword');
+  if (typeof PasswordValidator !== 'undefined' && passwordInput && toggleLoginPassword) {
+    PasswordValidator.setupToggle(toggleLoginPassword, passwordInput);
+  }
+
   console.log('[js/login.js] Initializing Login Form Controller...', {
     formFound: Boolean(loginForm),
     emailInputFound: Boolean(emailInput),

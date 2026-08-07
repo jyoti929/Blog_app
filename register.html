@@ -3,50 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up | Blogify</title>
+  <title>Sign Up | Blogify Studio</title>
+
+  <!-- Google Fonts: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <!-- Reusable Auth Manager -->
-  <script src="js/auth.js"></script>
-</head>
-<body style="display:grid; place-items:center; min-height:100vh; background:var(--canvas);">
+  <script src="js/theme.js"></script>
 
-  <div style="width:min(100% - 32px, 440px); background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-lg); padding:36px; box-shadow:var(--shadow-md);">
+  <!-- Auth Controller & Password Validator -->
+  <script src="js/auth.js"></script>
+  <script src="js/password-validator.js"></script>
+</head>
+<body style="display:grid; place-items:center; min-height:100vh; background: linear-gradient(135deg, #F8FAFC 0%, #ECFDF5 50%, #EFF6FF 100%); position:relative; overflow:hidden;">
+
+  <!-- Decorative Floating Background Blobs -->
+  <div style="position:absolute; top:-100px; right:-100px; width:300px; height:300px; border-radius:50%; background:rgba(16,185,129,0.15); filter:blur(60px); pointer-events:none;"></div>
+  <div style="position:absolute; bottom:-100px; left:-100px; width:300px; height:300px; border-radius:50%; background:rgba(139,92,246,0.15); filter:blur(60px); pointer-events:none;"></div>
+
+  <!-- Glassmorphic Auth Card Container -->
+  <div style="width:min(100% - 32px, 460px); background:rgba(255, 255, 255, 0.88); backdrop-filter:blur(16px); border:1px solid rgba(226, 232, 240, 0.9); border-radius:var(--radius-xl); padding:40px; box-shadow:0 20px 50px rgba(15, 23, 42, 0.08); position:relative; z-index:10;">
+    
     <div style="text-align:center; margin-bottom:28px;">
-      <a class="brand" href="index.html" style="justify-content:center; margin-bottom:12px;">
+      <a class="brand" href="index.html" style="justify-content:center; margin-bottom:14px;">
         <span class="brand-icon">📖</span> Blogify
       </a>
-      <h1 style="font-size:1.6rem; font-weight:800;">Create your Account</h1>
-      <p style="color:var(--muted); font-size:0.86rem; margin-top:4px;">Join Blogify to write, publish, and inspire.</p>
+      <h1 style="font-size:1.7rem; font-weight:800; color:var(--ink);">Create your Account ✨</h1>
+      <p style="color:var(--muted); font-size:0.86rem; margin-top:4px;">Join Blogify to write, publish, and inspire thousands of readers.</p>
     </div>
 
     <!-- Error Message Display Box -->
-    <div id="errorMessage" style="display:none; color:#DC2626; background:#FEE2E2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:0.84rem; font-weight:500;"></div>
+    <div id="errorMessage" style="display:none; color:#DC2626; background:#FEE2E2; border:1px solid #FCA5A5; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:0.84rem; font-weight:600;"></div>
 
     <form id="signup-form" novalidate>
-      <div class="form-field" style="margin-bottom:16px;">
+      <div class="form-field" style="margin-bottom:14px;">
         <label for="signup-name">Full Name *</label>
-        <input id="signup-name" name="name" type="text" placeholder="John Doe" required>
+        <input id="signup-name" name="name" type="text" placeholder="John Doe" required style="border-radius:10px; height:44px;">
       </div>
 
-      <div class="form-field" style="margin-bottom:16px;">
+      <div class="form-field" style="margin-bottom:14px;">
         <label for="signup-email">Email Address *</label>
-        <input id="signup-email" name="email" type="email" placeholder="john@example.com" required>
+        <input id="signup-email" name="email" type="email" placeholder="john@example.com" required style="border-radius:10px; height:44px;">
       </div>
 
-      <div class="form-field" style="margin-bottom:16px;">
+      <!-- Password Field with Eye Toggle -->
+      <div class="form-field" style="margin-bottom:10px; position:relative;">
         <label for="signup-password">Password *</label>
-        <input id="signup-password" name="password" type="password" placeholder="At least 8 characters" required>
+        <div style="position:relative; width:100%;">
+          <input id="signup-password" name="password" type="password" placeholder="At least 8 characters" required style="border-radius:10px; height:44px; padding-right:40px; width:100%;">
+          <button type="button" id="toggleSignupPassword" title="Show/Hide Password" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:1.1rem; border:none; background:none; cursor:pointer;">👁️</button>
+        </div>
       </div>
 
-      <div class="form-field" style="margin-bottom:24px;">
+      <!-- Compact Floating Validation Card (Hidden by default) -->
+      <div id="pwdPopoverCard" class="pwd-validation-card">
+        <div class="pwd-validation-card-title">
+          <span>Password Requirements</span>
+          <span id="strengthText" style="font-size:0.75rem;"></span>
+        </div>
+
+        <div style="height:4px; width:100%; background:#E2E8F0; border-radius:6px; overflow:hidden; margin-bottom:10px;">
+          <div id="strengthBar" style="height:100%; width:0%; transition:all 0.3s ease; background:#CBD5E1;"></div>
+        </div>
+
+        <ul id="pwdChecklist" style="list-style:none; padding:0; margin:0;"></ul>
+      </div>
+
+      <!-- Confirm Password Field with Eye Toggle -->
+      <div class="form-field" style="margin-bottom:14px;">
         <label for="signup-confirm">Confirm Password *</label>
-        <input id="signup-confirm" name="confirm" type="password" placeholder="Repeat password" required>
+        <div style="position:relative; width:100%;">
+          <input id="signup-confirm" name="confirm" type="password" placeholder="Repeat password" required style="border-radius:10px; height:44px; padding-right:40px; width:100%;">
+          <button type="button" id="toggleSignupConfirm" title="Show/Hide Password" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:1.1rem; border:none; background:none; cursor:pointer;">👁️</button>
+        </div>
+        <div id="confirmMatchFeedback" style="font-size:0.78rem; font-weight:600; margin-top:4px; display:none;"></div>
       </div>
 
-      <button class="btn-green" type="submit" style="width:100%; height:44px; justify-content:center;">Sign Up →</button>
+      <button class="btn-green" type="submit" style="width:100%; height:48px; justify-content:center; font-size:0.95rem; font-weight:800; border-radius:12px;">Create Free Account →</button>
     </form>
 
     <div style="text-align:center; margin-top:24px; padding-top:20px; border-top:1px solid var(--line); font-size:0.86rem; color:var(--muted);">

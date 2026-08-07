@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -71,7 +72,24 @@
         <a class="view-all-link" href="#latest-posts">View All</a>
       </div>
 
-      <p id="search-status" style="margin-bottom:16px; font-size:0.84rem; color:var(--muted);"></p>
+      <p id="search-status" style="margin-bottom:12px; font-size:0.84rem; color:var(--muted);"></p>
+
+      <!-- Category Filter Chips Bar -->
+      <div class="category-chips-bar" id="category-chips-bar">
+        <button type="button" class="cat-chip active" data-category="All">All <span class="chip-count" id="count-All">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="Technology">Technology <span class="chip-count" id="count-Technology">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="AI">AI <span class="chip-count" id="count-AI">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="Travel">Travel <span class="chip-count" id="count-Travel">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="Food">Food <span class="chip-count" id="count-Food">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="Business">Business <span class="chip-count" id="count-Business">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="Lifestyle">Lifestyle <span class="chip-count" id="count-Lifestyle">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="Education">Education <span class="chip-count" id="count-Education">(0)</span></button>
+      </div>
+
+      <!-- Category Fallback Notice Message Banner -->
+      <div id="category-fallback-notice" style="display:none; margin-bottom:16px; padding:10px 16px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:10px; color:#92400E; font-size:0.86rem; font-weight:600; align-items:center; gap:8px;">
+        <span>ℹ️</span> No blogs found in this category. Showing all blogs instead.
+      </div>
 
       <!-- Posts Cards Grid -->
       <div class="posts-grid" id="blog-grid">

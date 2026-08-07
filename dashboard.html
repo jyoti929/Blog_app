@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard | Blogify Analytics</title>
   
-  <!-- Synchronous Route Guard: Auth script loaded first -->
+  <!-- Synchronous Route Guard -->
   <script src="js/auth.js"></script>
   <script>
-    console.log('[Dashboard Head] Running Auth.checkAuth()...');
     Auth.checkAuth();
   </script>
 
@@ -16,10 +15,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Blogify Minimalist Stylesheet -->
+  
+  <!-- Blogify Stylesheet -->
   <link rel="stylesheet" href="css/dashboard.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -30,19 +32,18 @@
   <div class="modal-overlay" id="deleteModalOverlay">
     <div class="modal-card">
       <div style="font-size:2.2rem; color:var(--danger); margin-bottom:6px;">🗑️</div>
-      <h3 style="font-size:1.1rem; font-weight:700;">Delete Article?</h3>
-      <p style="font-size:0.84rem; color:var(--text-sub); margin:6px 0 20px;">Are you sure you want to delete this story? This action cannot be undone.</p>
+      <h3 style="font-size:1.1rem; font-weight:700;">Delete Blog</h3>
+      <p style="font-size:0.84rem; color:var(--text-sub); margin:6px 0 20px;">Are you sure you want to delete this blog?</p>
       <div style="display:flex; gap:10px; justify-content:center;">
         <button class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
-        <button class="btn btn-primary" id="confirmDeleteBtn" style="background:var(--danger);">Delete Article</button>
+        <button class="btn btn-primary" id="confirmDeleteBtn" style="background:var(--danger);">Delete</button>
       </div>
     </div>
   </div>
 
   <div class="app-container page-fade-in">
-    <!-- ==========================================================================
-         FIXED LEFT SIDEBAR
-         ========================================================================== -->
+    
+    <!-- FIXED LEFT SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <a class="sidebar-logo" href="index.html">
         <span class="sidebar-logo-icon">📖</span> Blogify
@@ -53,7 +54,7 @@
         <a class="nav-item active" href="dashboard.html">
           <span class="nav-icon">🏠</span> Dashboard
         </a>
-        <a class="nav-item" href="#my-blogs">
+        <a class="nav-item" href="my-blogs.html">
           <span class="nav-icon">📑</span> My Blogs
         </a>
         <a class="nav-item" href="create-blog.html">
@@ -77,9 +78,7 @@
       </div>
     </aside>
 
-    <!-- ==========================================================================
-         MAIN CONTENT WRAPPER & STICKY TOP NAVBAR
-         ========================================================================== -->
+    <!-- MAIN CONTENT WRAPPER -->
     <div class="main-wrapper">
       <header class="top-navbar">
         <div class="navbar-left">
@@ -108,9 +107,7 @@
         </div>
       </header>
 
-      <!-- ==========================================================================
-           MINIMALIST DASHBOARD BODY
-           ========================================================================== -->
+      <!-- DASHBOARD BODY -->
       <main class="dashboard-body">
 
         <!-- WELCOME BANNER CARD -->
@@ -121,17 +118,19 @@
           </div>
           <div class="date-badge">
             <span>📅</span>
-            <span id="currentDateDisplay">Thursday, Aug 6, 2026</span>
+            <span id="currentDateDisplay">Friday, Aug 7, 2026</span>
           </div>
         </section>
 
-        <!-- SECTION 1: FOUR SMALL STATISTIC CARDS -->
+        <!-- SECTION 1: 4 COLORFUL STAT CARDS -->
         <section class="stats-grid">
-          <div class="stat-card">
+          
+          <!-- 1. Total Blogs (Green Accent) -->
+          <div class="stat-card stat-green">
             <div class="stat-header">
               <div class="stat-icon">📄</div>
               <svg class="stat-sparkline" viewBox="0 0 50 22" fill="none">
-                <path d="M2 18 L12 10 L25 14 L38 6 L48 2" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+                <path d="M2 18 L12 10 L25 14 L38 6 L48 2" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
             </div>
             <div class="stat-label">Total Blogs</div>
@@ -139,44 +138,48 @@
             <div class="stat-sub">↑ +14% this month</div>
           </div>
 
-          <div class="stat-card">
+          <!-- 2. Published (Blue Accent) -->
+          <div class="stat-card stat-blue">
             <div class="stat-header">
               <div class="stat-icon">🚀</div>
               <svg class="stat-sparkline" viewBox="0 0 50 22" fill="none">
-                <path d="M2 16 L12 8 L25 12 L38 4 L48 2" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+                <path d="M2 16 L12 8 L25 12 L38 4 L48 2" stroke="#3B82F6" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
             </div>
             <div class="stat-label">Published</div>
             <div class="stat-count counter-anim" data-target="10">0</div>
-            <div class="stat-sub">↑ +8% this month</div>
+            <div class="stat-sub" style="color:#3B82F6;">↑ +8% this month</div>
           </div>
 
-          <div class="stat-card">
+          <!-- 3. Drafts (Orange Accent) -->
+          <div class="stat-card stat-orange">
             <div class="stat-header">
               <div class="stat-icon">📝</div>
               <svg class="stat-sparkline" viewBox="0 0 50 22" fill="none">
-                <path d="M2 8 L12 14 L25 10 L38 18 L48 12" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"/>
+                <path d="M2 8 L12 14 L25 10 L38 18 L48 12" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
             </div>
             <div class="stat-label">Drafts</div>
             <div class="stat-count counter-anim" data-target="2">0</div>
-            <div class="stat-sub" style="color:var(--warning);">2 in review</div>
+            <div class="stat-sub" style="color:#F59E0B;">2 in review</div>
           </div>
 
-          <div class="stat-card">
+          <!-- 4. Total Views (Purple Accent) -->
+          <div class="stat-card stat-purple">
             <div class="stat-header">
               <div class="stat-icon">👁️</div>
               <svg class="stat-sparkline" viewBox="0 0 50 22" fill="none">
-                <path d="M2 20 L12 14 L25 8 L38 4 L48 2" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+                <path d="M2 20 L12 14 L25 8 L38 4 L48 2" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round"/>
               </svg>
             </div>
             <div class="stat-label">Total Views</div>
             <div class="stat-count counter-anim" data-target="1430">0</div>
-            <div class="stat-sub">↑ +24% vs last week</div>
+            <div class="stat-sub" style="color:#8B5CF6;">↑ +24% vs last week</div>
           </div>
+
         </section>
 
-        <!-- SECTION 2: ONE LARGE PREMIUM ANALYTICS CARD -->
+        <!-- SECTION 2: ONE LARGE MAIN ANALYTICS CHART CARD -->
         <section class="main-analytics-card" id="analytics">
           <div class="analytics-header">
             <div>
@@ -241,6 +244,5 @@
   <!-- JavaScript Modules -->
   <script src="js/store.js"></script>
   <script src="js/dashboard.js"></script>
-  <script src="js/script.js"></script>
 </body>
 </html>

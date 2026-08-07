@@ -3,130 +3,238 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Author Profile | Blogify</title>
+  <title>My Profile | Blogify</title>
+
+  <!-- Synchronous Auth Route Guard -->
+  <script src="js/auth.js"></script>
+  <script>
+    Auth.checkAuth();
+  </script>
+
+  <!-- Google Font: Poppins -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Dashboard & Profile Stylesheets -->
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
 
-  <div class="dashboard-layout">
-    <!-- Left Sidebar Navigation -->
-    <aside class="dash-sidebar" id="sidebar">
-      <a href="create-blog.html" class="btn-green">+ New Blog</a>
+  <!-- Mobile Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-      <nav class="dash-menu">
-        <a class="dash-link" href="dashboard.html"><span>🏠</span> Dashboard</a>
-        <a class="dash-link" href="dashboard.html#recent-posts"><span>📑</span> My Blogs</a>
-        <a class="dash-link" href="index.html#categories"><span>📁</span> Categories</a>
-        <a class="dash-link" href="#comments"><span>💬</span> Comments</a>
-        <a class="dash-link active" href="profile.html"><span>👤</span> Profile</a>
-        <a class="dash-link" href="settings.html"><span>⚙️</span> Settings</a>
-        <a class="dash-link" href="login.html"><span>🚪</span> Logout</a>
+  <!-- Full App Container -->
+  <div class="app-container page-fade-in">
+
+    <!-- REUSED FIXED LEFT SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-logo" href="index.html">
+        <span class="sidebar-logo-icon">📖</span> Blogify
+      </a>
+
+      <div class="sidebar-menu-label">Main Navigation</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="dashboard.html">
+          <span class="nav-icon">🏠</span> Dashboard
+        </a>
+        <a class="nav-item" href="my-blogs.html">
+          <span class="nav-icon">📑</span> My Blogs
+        </a>
+        <a class="nav-item" href="create-blog.html">
+          <span class="nav-icon">✍️</span> Create Blog
+        </a>
+        <a class="nav-item" href="dashboard.html#analytics">
+          <span class="nav-icon">📊</span> Analytics
+        </a>
+        <a class="nav-item active" href="profile.html">
+          <span class="nav-icon">👤</span> Profile
+        </a>
+        <a class="nav-item" href="settings.html">
+          <span class="nav-icon">⚙️</span> Settings
+        </a>
       </nav>
 
-      <!-- Bottom Quote Box -->
-      <div class="sidebar-quote-box">
-        <span>“</span>
-        <p>"The best way to predict the future is to create it."</p>
-        <small style="color:var(--primary); font-weight:600; display:block; margin-top:4px;">— Peter Drucker</small>
+      <div class="sidebar-footer">
+        <button class="logout-btn" id="logoutBtn">
+          <span class="nav-icon">🚪</span> Logout
+        </button>
       </div>
     </aside>
 
-    <!-- Main Content Area -->
-    <main class="dash-main">
-      <header class="dash-header">
-        <div style="display:flex; align-items:center; gap:14px;">
-          <button class="mobile-menu-toggle" style="font-size:1.2rem;" aria-label="Toggle Menu">☰</button>
-          <h1>Author Profile</h1>
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="main-wrapper">
+
+      <!-- TOP NAVBAR -->
+      <header class="top-navbar">
+        <div class="navbar-left">
+          <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle Menu">☰</button>
+          <h1 class="page-title">My Profile</h1>
         </div>
 
-        <div class="user-profile-widget">
-          <button class="icon-btn" style="width:36px; height:36px; border:1px solid var(--line); border-radius:50%; position:relative;" title="Notifications">
-            🔔 <span class="badge-count" style="top:-2px; right:-2px;">1</span>
-          </button>
-          <button class="icon-btn theme-toggle-btn" style="width:36px; height:36px; border:1px solid var(--line); border-radius:50%;" title="Toggle Mode">🌙</button>
+        <div class="navbar-right">
+          <button class="icon-button theme-toggle-btn" title="Toggle Mode">🌙</button>
+          <a href="settings.html" class="icon-button" title="Settings">⚙️</a>
 
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div class="author-avatar-circle" style="width:34px; height:34px; font-size:0.8rem;">JD</div>
-            <strong style="font-size:0.88rem; color:var(--ink);">John Doe ▾</strong>
-          </div>
+          <a href="profile.html" class="user-profile-btn">
+            <div class="avatar-img" id="userAvatar">U</div>
+            <div class="user-name" id="userDisplayName">User ▾</div>
+          </a>
         </div>
       </header>
 
-      <div class="dash-content">
-        <!-- Profile Overview Card -->
-        <div class="profile-card">
-          <div class="profile-header-banner">
-            <div class="profile-avatar-lg">JD</div>
-            <div style="flex:1;">
-              <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
-                <h2 style="font-size:1.5rem; font-weight:800;" id="profile-display-name">John Doe</h2>
-                <span class="pill-status status-published" style="font-size:0.7rem;">Verified Author</span>
-              </div>
-              <p style="color:var(--muted); font-size:0.88rem;" id="profile-display-role">Writer & Content Creator</p>
-              <p style="color:var(--ink-secondary); font-size:0.85rem; margin-top:6px;" id="profile-display-bio">Passionate writer exploring technology, lifestyle, and travel stories for Blogify.</p>
+      <!-- PROFILE BODY CONTAINER -->
+      <main class="dashboard-body">
+        <div class="profile-page-wrapper">
+
+          <!-- TOP HEADER BAR (Compact navigation bar) -->
+          <div class="profile-top-bar">
+            <div class="profile-top-left">
+              <a href="dashboard.html" class="btn-back-link">
+                ← Dashboard
+              </a>
+              <h2 class="profile-page-title">My Profile</h2>
             </div>
-            <a class="btn-green" href="create-blog.html">+ Create Story</a>
+
+            <div class="profile-top-right">
+              <button type="button" class="btn-icon-link theme-toggle-btn" title="Toggle Dark/Light Mode">🌙</button>
+              <a href="settings.html" class="btn-icon-link" title="Account Settings">⚙️</a>
+            </div>
           </div>
 
-          <!-- Edit Profile Form -->
-          <form id="profile-form">
-            <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:20px;">Edit Profile Information</h3>
+          <!-- SINGLE ELEGANT PROFILE CARD -->
+          <section class="single-profile-card">
+            <div class="card-top-accent"></div>
 
-            <div class="form-grid-2">
-              <div class="form-field">
-                <label for="profile-name">Full Name *</label>
-                <input id="profile-name" name="name" type="text" value="John Doe" required>
+            <!-- Profile Picture Container -->
+            <div class="profile-photo-wrapper">
+              <div class="profile-photo-circle" id="photoCircle">
+                U
               </div>
-
-              <div class="form-field">
-                <label for="profile-email">Email Address *</label>
-                <input id="profile-email" name="email" type="email" value="john.doe@example.com" required>
+              <div class="photo-camera-overlay" id="cameraOverlayBtn" title="Upload / Change Photo">
+                📷
               </div>
-            </div>
+              <input type="file" id="photoFileInput" accept="image/*" hidden>
 
-            <div class="form-grid-2">
-              <div class="form-field">
-                <label for="profile-role">Title / Role</label>
-                <input id="profile-role" name="role" type="text" value="Writer & Content Creator">
-              </div>
-
-              <div class="form-field">
-                <label for="profile-location">Location</label>
-                <input id="profile-location" name="location" type="text" value="San Francisco, CA">
+              <div class="photo-action-buttons">
+                <button type="button" class="btn-photo-action" id="changePhotoBtn">Change Photo</button>
+                <button type="button" class="btn-photo-action btn-photo-remove" id="removePhotoBtn">Remove Photo</button>
               </div>
             </div>
 
-            <div class="form-field" style="margin-bottom:20px;">
-              <label for="profile-bio">Bio / Tagline</label>
-              <textarea id="profile-bio" name="bio">Passionate writer exploring technology, lifestyle, and travel stories for Blogify.</textarea>
+            <!-- Profile Name & Username -->
+            <h3 class="profile-fullname-text" id="cardName">Loading...</h3>
+            <div class="profile-username-text" id="cardUsername">...</div>
+
+            <!-- Profile Bio Box -->
+            <div class="profile-bio-box" id="cardBio">
+              ...
             </div>
 
-            <h4 style="font-size:0.95rem; font-weight:700; margin-bottom:14px;">Social Links & Website</h4>
-            <div class="form-grid-2">
-              <div class="form-field">
-                <label for="profile-website">Website URL</label>
-                <input id="profile-website" name="website" type="url" value="https://johndoe.writer.com">
+            <!-- Profile Details Grid (Real MongoDB Fields) -->
+            <div class="profile-details-grid">
+              
+              <div class="detail-item-box">
+                <div class="detail-item-icon">✉️</div>
+                <div class="detail-item-content">
+                  <div class="detail-item-label">Email Address</div>
+                  <div class="detail-item-value" id="cardEmail">Not Available</div>
+                </div>
               </div>
 
-              <div class="form-field">
-                <label for="profile-twitter">Twitter Handle</label>
-                <input id="profile-twitter" name="twitter" type="text" value="@johndoe_blogs">
+              <div class="detail-item-box">
+                <div class="detail-item-icon">📞</div>
+                <div class="detail-item-content">
+                  <div class="detail-item-label">Phone Number</div>
+                  <div class="detail-item-value" id="cardPhone">Not Available</div>
+                </div>
               </div>
+
+              <div class="detail-item-box">
+                <div class="detail-item-icon">📍</div>
+                <div class="detail-item-content">
+                  <div class="detail-item-label">Location</div>
+                  <div class="detail-item-value" id="cardLocation">Not Available</div>
+                </div>
+              </div>
+
+              <div class="detail-item-box">
+                <div class="detail-item-icon">📅</div>
+                <div class="detail-item-content">
+                  <div class="detail-item-label">Member Since</div>
+                  <div class="detail-item-value" id="cardMemberSince">Member since Recently</div>
+                </div>
+              </div>
+
             </div>
 
-            <div style="display:flex; justify-content:flex-end; margin-top:24px;">
-              <button class="btn-green" type="submit">Save Profile Changes</button>
-            </div>
-          </form>
+            <!-- Primary Edit Button -->
+            <button type="button" class="btn-edit-profile-main" id="openEditModalBtn">
+              ✏️ Edit Profile
+            </button>
+          </section>
+
         </div>
-      </div>
-    </main>
+      </main>
+
+    </div>
   </div>
 
+  <!-- EDIT PROFILE MODAL DIALOG -->
+  <div class="profile-modal-overlay" id="profileEditModal">
+    <div class="profile-modal-card">
+      <div class="modal-header-bar">
+        <div class="modal-title-text">✏️ Edit Profile Details</div>
+        <button type="button" class="btn-close-modal close-modal-btn">&times;</button>
+      </div>
+
+      <form id="modalProfileForm">
+        <div class="modal-form-grid">
+          <div class="modal-field-group">
+            <label class="modal-field-label" for="edit-name">Full Name *</label>
+            <input type="text" id="edit-name" class="modal-field-input" required>
+          </div>
+
+          <div class="modal-field-group">
+            <label class="modal-field-label" for="edit-username">Username</label>
+            <input type="text" id="edit-username" class="modal-field-input" placeholder="e.g. johndoe">
+          </div>
+        </div>
+
+        <div class="modal-form-grid">
+          <div class="modal-field-group">
+            <label class="modal-field-label" for="edit-email">Email Address *</label>
+            <input type="email" id="edit-email" class="modal-field-input" required>
+          </div>
+
+          <div class="modal-field-group">
+            <label class="modal-field-label" for="edit-phone">Phone Number</label>
+            <input type="text" id="edit-phone" class="modal-field-input" placeholder="e.g. +1 (555) 0199">
+          </div>
+        </div>
+
+        <div class="modal-field-group" style="margin-bottom: 12px;">
+          <label class="modal-field-label" for="edit-location">Location</label>
+          <input type="text" id="edit-location" class="modal-field-input" placeholder="e.g. San Francisco, CA">
+        </div>
+
+        <div class="modal-field-group" style="margin-bottom: 16px;">
+          <label class="modal-field-label" for="edit-bio">Bio & Short Summary</label>
+          <textarea id="edit-bio" class="modal-field-input" placeholder="Tell readers about yourself..."></textarea>
+        </div>
+
+        <div class="modal-footer-bar">
+          <button type="button" class="btn btn-secondary close-modal-btn" style="padding:8px 18px; font-size:0.84rem;">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="padding:8px 22px; font-size:0.84rem;">💾 Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
   <script src="js/store.js"></script>
-  <script src="js/script.js"></script>
+  <script src="js/profile.js"></script>
 </body>
 </html>

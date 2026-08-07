@@ -30,6 +30,20 @@ const blogSchema = new mongoose.Schema(
       default: '',
       trim: true
     },
+    tags: {
+      type: [String],
+      default: []
+    },
+    template: {
+      type: String,
+      default: 'blank',
+      trim: true
+    },
+    theme: {
+      type: String,
+      default: 'theme-01',
+      trim: true
+    },
     status: {
       type: String,
       enum: ['published', 'draft'],
@@ -46,7 +60,7 @@ const blogSchema = new mongoose.Schema(
     }
   },
   {
-    timestamps: true
+    timestamps: true // Automatically manages createdAt and updatedAt fields
   }
 );
 

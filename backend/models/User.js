@@ -29,8 +29,44 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters long'],
+      minlength: [6, 'Password must be at least 6 characters long'],
       select: false // Exclude password field by default from query results
+    },
+    profileImage: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    username: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    phone: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    location: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    bio: {
+      type: String,
+      default: '',
+      trim: true
+    },
+    preferences: {
+      emailNotifications: { type: Boolean, default: true },
+      commentNotifications: { type: Boolean, default: true },
+      onlineStatus: { type: Boolean, default: true },
+      autoSaveDrafts: { type: Boolean, default: true }
+    },
+    appearance: {
+      type: String,
+      enum: ['light', 'dark', 'system'],
+      default: 'light'
     }
   },
   {

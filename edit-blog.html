@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Blog | Blogify Studio</title>
+
+  <!-- Google Fonts: Poppins, Inter, Roboto, Open Sans, Lora, Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@600;800&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Core Dashboard & Studio Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/create-blog.css">
+  <script src="js/theme.js"></script>
+
+  <!-- Auth Route Protection -->
+  <script src="js/auth.js"></script>
+  <script>Auth.checkAuth();</script>
+</head>
+<body>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Full App Container -->
+  <div class="app-container page-fade-in">
+
+    <!-- Reused Fixed Left Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-logo" href="index.html">
+        <span class="sidebar-logo-icon">📖</span> Blogify
+      </a>
+
+      <div class="sidebar-menu-label">Main Navigation</div>
+      <nav class="sidebar-nav">
+        <a class="nav-item" href="dashboard.html">
+          <span class="nav-icon">🏠</span> Dashboard
+        </a>
+        <a class="nav-item" href="my-blogs.html">
+          <span class="nav-icon">📑</span> My Blogs
+        </a>
+        <a class="nav-item" href="create-blog.html">
+          <span class="nav-icon">✍️</span> Create Blog
+        </a>
+        <a class="nav-item" href="dashboard.html#analytics">
+          <span class="nav-icon">📊</span> Analytics
+        </a>
+        <a class="nav-item" href="profile.html">
+          <span class="nav-icon">👤</span> Profile
+        </a>
+        <a class="nav-item" href="settings.html">
+          <span class="nav-icon">⚙️</span> Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="logout-btn" id="logoutBtn">
+          <span class="nav-icon">🚪</span> Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper & Sticky Top Navbar -->
+    <div class="main-wrapper">
+      <header class="top-navbar">
+        <div class="navbar-left">
+          <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle Menu">☰</button>
+          <h1 class="page-title">Edit Blog Studio</h1>
+        </div>
+
+        <div class="navbar-center">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="globalSearch" placeholder="Search studio..." autocomplete="off">
+          </div>
+        </div>
+
+        <div class="navbar-right">
+          <button class="icon-button" title="Notifications">
+            🔔
+            <span class="notification-badge"></span>
+          </button>
+          <button class="icon-button theme-toggle-btn" id="themeToggleBtn" title="Toggle Mode">🌙</button>
+
+          <a href="profile.html" class="user-profile-btn">
+            <div class="avatar-img" id="userAvatar">JD</div>
+            <div class="user-name" id="userDisplayName">User ▾</div>
+          </a>
+        </div>
+      </header>
+
+      <!-- Dashboard Content Body -->
+      <main class="dashboard-body">
+
+        <!-- 1. Large Colorful Hero Banner with Animated Gradient -->
+        <section class="create-hero-banner">
+          <div class="floating-shape-1"></div>
+          <div class="floating-shape-2"></div>
+
+          <div class="hero-content-inner">
+            <div class="hero-tag">✏️ EDITING MODE</div>
+            <h2>Edit Your Blog Story ✍️</h2>
+            <p>Update your story title, category, cover image, tags, and theme styling.</p>
+          </div>
+        </section>
+
+        <!-- 2. Main Studio Grid Layout -->
+        <form id="create-blog-form" class="editor-main-grid">
+
+          <!-- LEFT COLUMN: Main Form Inputs & Content Editor -->
+          <div class="editor-left-col">
+
+            <!-- Title & Category Card -->
+            <div class="form-card">
+              <div class="form-field-group">
+                <label for="blog-title" class="field-label-custom">Blog Title <span class="req-star">*</span></label>
+                <input type="text" id="blog-title" name="title" class="input-styled" placeholder="Enter a descriptive story title..." required autocomplete="off">
+              </div>
+
+              <div class="form-field-group" style="margin-bottom:0;">
+                <label for="blog-category" class="field-label-custom">Select Category <span class="req-star">*</span></label>
+                <select id="blog-category" name="category" class="select-styled" required>
+                  <option value="" disabled selected>Choose a category...</option>
+                  <option value="Technology">💻 Technology</option>
+                  <option value="Travel">✈️ Travel</option>
+                  <option value="Food">🍕 Food & Cooking</option>
+                  <option value="Lifestyle">🌿 Lifestyle</option>
+                  <option value="Business">💼 Business & Finance</option>
+                  <option value="AI">🤖 AI & Future</option>
+                  <option value="General">📰 General</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Cover Image Upload Card -->
+            <div class="form-card">
+              <label class="field-label-custom">Cover Image</label>
+              
+              <div class="upload-dropzone" id="image-upload-area">
+                <input type="file" id="blog-image-file" accept="image/*" class="file-input-hidden">
+                <div class="upload-icon-circle">🖼️</div>
+                <div class="upload-text-main">Click or Drag & Drop Cover Image</div>
+                <div class="upload-text-sub">PNG, JPG, WebP up to 5MB</div>
+              </div>
+
+              <div class="image-preview-card" id="cover-preview-box" style="display:none;">
+                <img id="cover-preview-img" src="" alt="Cover Preview">
+                <div class="preview-actions-bar">
+                  <button type="button" class="btn-icon-label" id="replace-cover-btn">✏️ Replace</button>
+                  <button type="button" class="btn-icon-label danger" id="remove-cover-btn">🗑️ Remove</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rich Text Editor Container Card -->
+            <div class="form-card editor-card-box">
+              <div class="editor-header-bar">
+                <span class="field-label-custom" style="margin:0;">Story Content <span class="req-star">*</span></span>
+
+                <!-- Formatting Toolbar -->
+                <div class="rich-toolbar">
+                  <button type="button" class="tb-btn" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+                  <button type="button" class="tb-btn" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+                  <button type="button" class="tb-btn" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+                  <button type="button" class="tb-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+                  <div class="tb-divider"></div>
+                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="H2" title="Heading 2">H2</button>
+                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="H3" title="Heading 3">H3</button>
+                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="P" title="Paragraph">P</button>
+                  <div class="tb-divider"></div>
+                  <button type="button" class="tb-btn" data-cmd="insertUnorderedList" title="Bullet List">• List</button>
+                  <button type="button" class="tb-btn" data-cmd="insertOrderedList" title="Numbered List">1. List</button>
+                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="BLOCKQUOTE" title="Quote">“ Quote</button>
+                  <div class="tb-divider"></div>
+                  <button type="button" class="tb-btn" id="btn-insert-link" title="Insert Link">🔗 Link</button>
+                  <button type="button" class="tb-btn" id="btn-insert-image" title="Insert Image">📷 Image</button>
+                  <button type="button" class="tb-btn" id="btn-insert-code" title="Code Block">&lt;/&gt;</button>
+                  <button type="button" class="tb-btn" data-cmd="removeFormat" title="Clear Formatting">🧹</button>
+                </div>
+              </div>
+
+              <!-- Contenteditable Story Body Area -->
+              <div id="blog-content-editor" class="story-editor-body" contenteditable="true" data-placeholder="Update story content..."></div>
+              <textarea id="blog-content" name="content" hidden></textarea>
+            </div>
+
+            <!-- Tags Input Card -->
+            <div class="form-card">
+              <label for="tag-input-field" class="field-label-custom">Tags</label>
+              <div class="tags-input-wrapper">
+                <div class="tags-list" id="tags-container"></div>
+                <input type="text" id="tag-input-field" class="tag-bare-input" placeholder="Type tag and press Enter...">
+              </div>
+              <small style="color:var(--text-sub); font-size:0.75rem; margin-top:6px; display:block;">Press Enter or comma to add tags.</small>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: Theme Selector & Actions -->
+          <div class="editor-right-col">
+
+            <!-- Theme Selection Card -->
+            <div class="form-card">
+              <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:14px;">🎨 Select Visual Theme</h3>
+
+              <div class="theme-selector-grid" id="theme-grid">
+                <div class="theme-option-card active" data-theme="theme-01">
+                  <div class="theme-swatch t-preview-01"></div>
+                  <div class="theme-name">Emerald Clean</div>
+                </div>
+                <div class="theme-option-card" data-theme="theme-02">
+                  <div class="theme-swatch t-preview-02"></div>
+                  <div class="theme-name">Dark Mode Slate</div>
+                </div>
+                <div class="theme-option-card" data-theme="theme-03">
+                  <div class="theme-swatch t-preview-03"></div>
+                  <div class="theme-name">Minimalist Light</div>
+                </div>
+                <div class="theme-option-card" data-theme="theme-04">
+                  <div class="theme-swatch t-preview-04"></div>
+                  <div class="theme-name">Indigo Gradient</div>
+                </div>
+                <div class="theme-option-card" data-theme="theme-05">
+                  <div class="theme-swatch t-preview-05"></div>
+                  <div class="theme-name">Warm Crimson</div>
+                </div>
+                <div class="theme-option-card" data-theme="theme-06">
+                  <div class="theme-swatch t-preview-06"></div>
+                  <div class="theme-name">Amber Sunshine</div>
+                </div>
+                <div class="theme-option-card" data-theme="theme-07">
+                  <div class="theme-swatch t-preview-07"></div>
+                  <div class="theme-name">Purple Sunset</div>
+                </div>
+                <div class="theme-option-card" data-theme="theme-08">
+                  <div class="theme-swatch t-preview-08"></div>
+                  <div class="theme-name">Monochrome Noir</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons Card -->
+            <div class="form-card">
+              <button type="submit" id="btn-publish" name="publish" class="btn btn-primary" style="width:100%; padding:14px; font-size:1rem; margin-bottom:10px;">
+                Update Blog →
+              </button>
+              <button type="submit" id="btn-save-draft" name="save-draft" class="btn btn-secondary" style="width:100%; padding:12px; font-size:0.9rem;">
+                💾 Save Draft
+              </button>
+              <a href="dashboard.html" class="btn btn-secondary" style="display:block; text-align:center; margin-top:10px; padding:10px;">
+                Cancel & Return
+              </a>
+            </div>
+
+          </div>
+
+        </form>
+      </main>
+
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/store.js"></script>
+  <script src="js/script.js"></script>
+  <script src="js/create-blog.js"></script>
+</body>
+</html>
