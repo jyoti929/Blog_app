@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
           isFallback = true;
           if (noticeBanner) {
             noticeBanner.style.display = 'flex';
-            noticeBanner.innerHTML = `<span>ℹ️</span> No blogs found in <strong>"${activeCategory}"</strong> category. Showing all blogs instead.`;
+            noticeBanner.innerHTML = '<span>ℹ️</span> No blogs found in this category. Showing all blogs instead.';
           }
         }
       }
@@ -285,11 +285,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
           return titleMatch || categoryMatch || descMatch || contentMatch || tagsMatch || authorMatch;
         });
+
+        console.log(`[Home Search] Query: ${searchQuery.trim()}`);
+        console.log(`[Home Search] Total blogs: ${allBlogs.length}`);
+        console.log(`[Home Search] Matching blogs: ${postsToRender.length}`);
+      }
+
+      // Toggle Clear Filters button visibility
+      const clearFiltersBtn = document.querySelector('#clear-filters-btn');
+      const isFiltered = searchQuery.trim() !== '' || activeCategory !== 'All';
+      if (clearFiltersBtn) {
+        clearFiltersBtn.style.display = isFiltered ? 'inline-flex' : 'none';
       }
 
       // Update Search / Category Status Text
       if (searchStatus) {
-        if (searchQuery) {
+        if (searchQuery && activeCategory !== 'All') {
+          searchStatus.textContent = `Showing ${postsToRender.length} blog${postsToRender.length === 1 ? '' : 's'} matching "${searchQuery}" in "${activeCategory}"`;
+        } else if (searchQuery) {
           searchStatus.textContent = `Search results for "${searchQuery}" (${postsToRender.length} found)`;
         } else if (isFallback) {
           searchStatus.textContent = `Showing all ${postsToRender.length} published blogs (Category "${activeCategory}" is empty)`;
@@ -313,16 +326,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Global Empty State (If MongoDB has 0 blogs overall or search returns 0)
+      // Global Empty State (If MongoDB has 0 blogs overall, or search/category combo returns 0)
       if (postsToRender.length === 0) {
         blogGrid.style.display = 'none';
         if (emptyState) {
           emptyState.hidden = false;
-          if (searchQuery.trim()) {
+          if (searchQuery.trim() && activeCategory !== 'All') {
             emptyState.innerHTML = `
               <div style="font-size:2.5rem; color:var(--primary); margin-bottom:10px;">🔍</div>
-              <h3 style="font-size:1.2rem; font-weight:700; color:var(--ink);">No blogs match your search.</h3>
-              <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">Try searching for a different title, category, tag, or author name.</p>
+              <h3 style="font-size:1.2rem; font-weight:700; color:var(--ink);">No blogs found</h3>
+              <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">No stories in "${activeCategory}" match "${searchQuery.trim()}". Try clearing your filters or searching another keyword.</p>
+              <button type="button" class="btn-clear-filters-action" style="margin-top:16px; padding:8px 20px; font-size:0.86rem; border-radius:8px; background:var(--primary); color:#FFFFFF; border:none; font-weight:600; cursor:pointer;">🧹 Clear Search</button>
+            `;
+          } else if (searchQuery.trim()) {
+            emptyState.innerHTML = `
+              <div style="font-size:2.5rem; color:var(--primary); margin-bottom:10px;">🔍</div>
+              <h3 style="font-size:1.2rem; font-weight:700; color:var(--ink);">No blogs found</h3>
+              <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">No stories match '${searchQuery.trim()}'. Try searching for a different title, content, category, tag, or author name.</p>
+              <button type="button" class="btn-clear-filters-action" style="margin-top:16px; padding:8px 20px; font-size:0.86rem; border-radius:8px; background:var(--primary); color:#FFFFFF; border:none; font-weight:600; cursor:pointer;">🧹 Clear Search</button>
             `;
           } else {
             emptyState.innerHTML = `
@@ -330,6 +351,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <h3 style="font-size:1.1rem; font-weight:700;">No blogs have been published yet.</h3>
               <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">Check back later or log in to create and publish your first story!</p>
             `;
+          }
+
+          // Attach Clear Filters handler to empty state button
+          const actionBtn = emptyState.querySelector('.btn-clear-filters-action');
+          if (actionBtn) {
+            actionBtn.onclick = clearAllFilters;
           }
         }
         return;
@@ -400,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Backend Category Chips Click Handler
     const catChips = document.querySelectorAll('.cat-chip, .category-card');
     catChips.forEach(chip => {
-      chip.addEventListener('click', async () => {
+      chip.addEventListener('click', () => {
         activeCategory = chip.dataset.category || 'All';
 
         // Visually highlight selected category chip
@@ -417,33 +444,54 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Instant Backend Search Listener
+    // Clear Filters Implementation
+    function clearAllFilters() {
+      searchQuery = '';
+      activeCategory = 'All';
+
+      document.querySelectorAll('#blog-search, #globalSearch').forEach(input => {
+        input.value = '';
+      });
+
+      document.querySelectorAll('.cat-chip').forEach(c => {
+        if ((c.dataset.category || 'All') === 'All') c.classList.add('active');
+        else c.classList.remove('active');
+      });
+
+      const clearBtn = document.querySelector('#clear-filters-btn');
+      if (clearBtn) clearBtn.style.display = 'none';
+
+      const noticeBanner = document.querySelector('#category-fallback-notice');
+      if (noticeBanner) noticeBanner.style.display = 'none';
+
+      renderHomePosts();
+    }
+
+    const clearFiltersBtnHeader = document.querySelector('#clear-filters-btn');
+    if (clearFiltersBtnHeader) {
+      clearFiltersBtnHeader.addEventListener('click', clearAllFilters);
+    }
+
+    // Instant Pure Frontend Search Listener
     const searchInputs = document.querySelectorAll('#blog-search, #globalSearch');
+    const clearXBtn = document.querySelector('#clear-search-x-btn');
+
     searchInputs.forEach(input => {
-      let debounceTimer = null;
       input.addEventListener('input', (e) => {
         searchQuery = e.target.value;
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(async () => {
-          if (searchQuery.trim()) {
-            try {
-              console.log(`[BlogSearch API] Querying GET /api/blogs?search=${encodeURIComponent(searchQuery)}...`);
-              const res = await fetch(`http://localhost:5000/api/blogs?search=${encodeURIComponent(searchQuery)}`);
-              if (res.ok) {
-                const data = await res.json();
-                if (data.success && window.store && typeof window.store.setPosts === 'function') {
-                  window.store.setPosts(data.data);
-                  if (data.categoryCounts) updateCategoryChipCounts(data.categoryCounts);
-                }
-              }
-            } catch (err) {
-              console.warn('[BlogSearch API Error]:', err.message);
-            }
-          }
-          renderHomePosts();
-        }, 150);
+        if (clearXBtn) {
+          clearXBtn.style.display = searchQuery.trim() ? 'inline-block' : 'none';
+        }
+        renderHomePosts();
       });
     });
+
+    if (clearXBtn) {
+      clearXBtn.addEventListener('click', () => {
+        clearAllFilters();
+        clearXBtn.style.display = 'none';
+      });
+    }
 
     // Automatically fetch published blogs from GET /api/blogs on page load
     (async () => {

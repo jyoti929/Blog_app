@@ -12,19 +12,17 @@ if (typeof Auth !== 'undefined') {
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // ── STEP A: Authentication Guard ─────────────────────────────
-  if (typeof Auth !== 'undefined' && !Auth.isAuthenticated()) {
-    console.warn('[Dashboard] Unauthenticated user. Redirecting to login...');
-    Auth.logout();
-    return;
+  // ── STEP A: Authentication Guard & Backend Verification ─────
+  let authenticatedUser = null;
+  if (typeof Auth !== 'undefined') {
+    if (!Auth.checkAuth()) return;
+    authenticatedUser = await Auth.verifyTokenWithBackend();
+    if (!authenticatedUser) return;
   }
-  console.log('[Dashboard] ✅ User is authenticated.');
 
   // ── STEP B: User Profile Header UI ───────────────────────────
-  const user      = typeof Auth !== 'undefined' ? Auth.getUserData()    : null;
-  const userEmail = typeof Auth !== 'undefined' ? Auth.getLoggedInUser() : null;
-
-  const displayName       = user ? user.name : (userEmail ? userEmail.split('@')[0] : 'Author');
+  const user = authenticatedUser || (typeof Auth !== 'undefined' ? Auth.getUserData() : null);
+  const displayName = user ? user.name : 'Author';
   const userDisplayNameEl = document.getElementById('userDisplayName');
   const userAvatarEl      = document.getElementById('userAvatar');
   const welcomeGreetingEl = document.getElementById('welcomeGreeting');
@@ -66,30 +64,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ── STEP E: Fetch Analytics & Posts via Promise.all ───────────
-  console.log('[Dashboard] Fetching real-time MongoDB analytics & blog records...');
+  // ── STEP E: Fetch Analytics & User Blogs via Store ───────────
+  console.log('[Dashboard] Authenticated user:', displayName);
+  console.log("[Dashboard] Fetching logged-in user's blogs...");
 
   let analyticsData = null;
   let posts = [];
 
   try {
-    const [analyticsRes, postsRes] = await Promise.all([
+    const [analyticsRes, myPostsRes] = await Promise.all([
       window.store && typeof window.store.fetchAnalytics === 'function'
         ? window.store.fetchAnalytics()
-        : fetch('http://localhost:5000/api/dashboard/analytics', {
-            headers: localStorage.getItem('authToken') ? { Authorization: `Bearer ${localStorage.getItem('authToken')}` } : {}
-          }).then(res => res.json()).catch(() => null),
+        : null,
 
-      window.store && typeof window.store.fetchAllPosts === 'function'
-        ? window.store.fetchAllPosts()
-        : fetch('http://localhost:5000/api/blogs').then(res => res.json()).then(json => json.data || []).catch(() => [])
+      window.store && typeof window.store.fetchMyPosts === 'function'
+        ? window.store.fetchMyPosts()
+        : { success: false, data: [] }
     ]);
 
     analyticsData = analyticsRes;
-    posts = Array.isArray(postsRes) ? postsRes : (window.store ? window.store.getAllPosts() : []);
 
-    console.log('[Dashboard] ✅ Analytics response:', analyticsData);
-    console.log(`[Dashboard] ✅ Received ${posts.length} posts from MongoDB.`);
+    if (myPostsRes && myPostsRes.success && Array.isArray(myPostsRes.data)) {
+      posts = myPostsRes.data;
+      console.log('[Dashboard] GET /api/blogs/my → 200');
+    } else if (myPostsRes && myPostsRes.status === 401) {
+      console.warn('[Dashboard] 401 Unauthorized received during fetch.');
+      if (typeof Auth !== 'undefined') Auth.clearSessionData();
+      window.location.replace('login.html');
+      return;
+    } else if (myPostsRes && myPostsRes.status === 403) {
+      console.error('[Dashboard] 403 Forbidden received:', myPostsRes.message);
+      alert(myPostsRes.message || 'Authorization error.');
+      return;
+    } else {
+      posts = window.store ? window.store.getAllPosts() : [];
+    }
+
+    console.log(`[Dashboard] User blogs received: ${posts.length}`);
 
   } catch (err) {
     console.error('[Dashboard] ❌ Error fetching dashboard data:', err.message);
@@ -137,14 +148,32 @@ document.addEventListener('DOMContentLoaded', async () => {
  * ==========================================================================
  */
 function updateStatCards(analytics, posts) {
-  const totalBlogs     = analytics ? analytics.totalBlogs     : posts.length;
-  const publishedBlogs = analytics ? analytics.publishedBlogs : posts.filter(p => p.status === 'published').length;
-  const draftBlogs     = analytics ? analytics.draftBlogs     : posts.filter(p => p.status === 'draft').length;
-  const totalViews     = analytics ? analytics.totalViews     : posts.reduce((sum, p) => sum + (p.views || 0), 0);
+  const myBlogs = Array.isArray(posts) ? posts : [];
+  
+  // Calculate analytics directly from authenticated user's real MongoDB blogs array
+  const totalBlogs     = myBlogs.length;
+  const publishedBlogs = myBlogs.filter(p => (p.status || 'published') === 'published').length;
+  const draftBlogs     = myBlogs.filter(p => p.status === 'draft').length;
+  const totalViews     = myBlogs.reduce((sum, p) => sum + (p.views || 0), 0);
 
-  const blogsThisMonth = analytics ? analytics.blogsThisMonth : 0;
-  const totalCategories = analytics ? analytics.totalCategories : 0;
-  const totalTags       = analytics ? analytics.totalTags       : 0;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+
+  const blogsThisMonth = myBlogs.filter(p => {
+    if (!p.createdAt) return false;
+    const d = new Date(p.createdAt);
+    return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+  }).length;
+
+  const totalCategories = new Set(myBlogs.map(p => p.category || 'General')).size;
+  const totalTags       = new Set(myBlogs.flatMap(p => Array.isArray(p.tags) ? p.tags : [])).size;
+
+  console.log(`[Analytics] User blogs: ${myBlogs.length}`);
+  console.log(`[Analytics] Total blogs: ${totalBlogs}`);
+  console.log(`[Analytics] Published: ${publishedBlogs}`);
+  console.log(`[Analytics] Drafts: ${draftBlogs}`);
+  console.log(`[Analytics] Views: ${totalViews}`);
 
   const totalEl = document.querySelector('.stat-card:nth-child(1) .stat-count');
   const pubEl   = document.querySelector('.stat-card:nth-child(2) .stat-count');
@@ -162,10 +191,10 @@ function updateStatCards(analytics, posts) {
   if (viewsEl) viewsEl.setAttribute('data-target', totalViews);
 
   if (totalBlogs === 0) {
-    if (totalSub) totalSub.textContent = 'No analytics available yet.';
-    if (pubSub)   pubSub.textContent   = 'No analytics available yet.';
-    if (draftSub) draftSub.textContent = 'No analytics available yet.';
-    if (viewsSub) viewsSub.textContent = 'No analytics available yet.';
+    if (totalSub) totalSub.textContent = 'No blogs yet';
+    if (pubSub)   pubSub.textContent   = 'No blogs yet';
+    if (draftSub) draftSub.textContent = 'No blogs yet';
+    if (viewsSub) viewsSub.textContent = 'No blogs yet';
   } else {
     if (totalSub) totalSub.textContent = `↑ ${blogsThisMonth} created this month`;
     if (pubSub)   pubSub.textContent   = `↑ ${publishedBlogs} live published stories`;
@@ -227,11 +256,11 @@ function initRealAnalyticsChart(analytics, posts) {
   // 1. Views Trend (Dynamic from posts or analytics)
   const viewsTrendLabels = posts.length > 0
     ? posts.slice(0, 7).map(p => (p.title.length > 12 ? p.title.substring(0, 12) + '...' : p.title)).reverse()
-    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    : ['No Blogs Yet'];
 
   const viewsTrendValues = posts.length > 0
     ? posts.slice(0, 7).map(p => p.views || 0).reverse()
-    : [0, 0, 0, 0, 0, 0, 0];
+    : [0];
 
   // 2. Categories Distribution from MongoDB
   const catDist = (chartsData && chartsData.categoryDistribution && chartsData.categoryDistribution.length > 0)
@@ -432,7 +461,7 @@ function renderRecentBlogsTable(data) {
         <td>
           <div class="action-buttons">
             <a href="blog-details.html?id=${blogId}" class="btn-icon-action" title="View Story">👁️</a>
-            <a href="create-blog.html?id=${blogId}" class="btn-icon-action" title="Edit Story">✏️</a>
+            <a href="edit-blog.html?id=${blogId}" class="btn-icon-action" title="Edit Story">✏️</a>
             <button class="btn-icon-action delete-blog-btn" data-id="${blogId}" title="Delete Story">🗑️</button>
           </div>
         </td>
@@ -468,18 +497,17 @@ function renderRecentBlogsTable(data) {
         if (deleteResult && !deleteResult.success) {
           showDashboardToast(`❌ ${deleteResult.message || 'Failed to delete blog'}`, 'error');
         } else {
-          showDashboardToast('✅ Blog deleted successfully.', 'success');
-        }
+          showDashboardToast('Blog deleted successfully.', 'success');
 
+          if (window.store && typeof window.store.fetchMyPosts === 'function') {
+            const res = await window.store.fetchMyPosts();
+            if (res && res.success) {
+              renderRecentBlogsTable(res.data);
+              updateStatCards(null, res.data);
+            }
+          }
+        }
         targetDeleteId = null;
-
-        // Re-fetch and re-render blog list automatically
-        if (window.store && typeof window.store.fetchAllPosts === 'function') {
-          await window.store.fetchAllPosts();
-          const refreshed = window.store.getAllPosts() || [];
-          renderRecentBlogsTable(refreshed);
-          updateStats(refreshed);
-        }
       }
     };
   }

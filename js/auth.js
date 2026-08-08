@@ -35,8 +35,10 @@ const Auth = {
 
   // Route Guard: Require Authentication on Protected Pages
   checkAuth() {
-    if (!this.isAuthenticated()) {
-      console.warn('[Auth] Unauthenticated access attempt. Redirecting to login.html...');
+    console.log('[Auth] Checking authentication...');
+    const token = this.getToken();
+    if (!token) {
+      console.warn('[Auth] Token not found. Redirecting to login...');
       this.clearSessionData();
       const currentPath = window.location.pathname;
       if (!currentPath.includes('login.html') && !currentPath.includes('register.html')) {
@@ -44,16 +46,19 @@ const Auth = {
       }
       return false;
     }
+    console.log('[Auth] Token found.');
     return true;
   },
 
   // Verify JWT Token against Backend Endpoint GET /api/auth/me
   async verifyTokenWithBackend() {
     const token = this.getToken();
-    if (!token) return false;
+    if (!token) {
+      console.warn('[Auth] Token not found.');
+      return false;
+    }
 
     try {
-      console.log('[Auth] Verifying JWT token with backend GET /api/auth/me...');
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
         headers: {
@@ -62,21 +67,26 @@ const Auth = {
       });
 
       if (!response.ok) {
-        console.warn('[Auth] Backend token verification failed. Response status:', response.status);
-        this.logout();
+        console.warn('[Auth] Token invalid/expired.');
+        this.clearSessionData();
+        window.location.replace('login.html');
         return false;
       }
 
       const data = await response.json();
-      console.log('[Auth] Token verification succeeded. Authenticated user:', data.user);
       if (data.success && data.user) {
+        console.log('[Auth] Authentication successful.');
         localStorage.setItem('loggedInUser', data.user.email);
         localStorage.setItem('user_data', JSON.stringify(data.user));
-        return true;
+        return data.user;
       }
     } catch (err) {
       console.error('[Auth API Error] Failed to verify token with backend:', err.message);
     }
+
+    console.warn('[Auth] Token invalid/expired.');
+    this.clearSessionData();
+    window.location.replace('login.html');
     return false;
   },
 
@@ -177,18 +187,23 @@ const Auth = {
     }
   },
 
-  // Clear Session Credentials
+  // Clear Session Credentials & Frontend Store Cache
   clearSessionData() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('loggedInUser');
     localStorage.removeItem('user_data');
+    if (window.store) {
+      window.store.cachedPosts = [];
+    }
   },
 
   // Complete Logout Handler
   logout() {
-    console.log('[Auth] Logging out user and purging token...');
+    console.log('[Auth] Logging out...');
     this.clearSessionData();
+    console.log('[Auth] Token removed.');
+    console.log('[Auth] User redirected to login.');
     window.location.replace('login.html');
   }
 };

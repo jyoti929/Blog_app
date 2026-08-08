@@ -291,6 +291,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (editId) {
     console.log(`[BlogStudio] Edit mode active for Blog ID: ${editId}`);
+    const token = localStorage.getItem('authToken');
+
+    // UI Edit Protection Guard: Verify blog belongs to current user's My Blogs data
+    let isOwner = false;
+    let existingPost = null;
+
+    try {
+      if (token) {
+        const myRes = await fetch('http://localhost:5000/api/blogs/my', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (myRes.ok) {
+          const myData = await myRes.json();
+          if (myData.success && Array.isArray(myData.data)) {
+            existingPost = myData.data.find(p => (p.id || p._id) === editId);
+            if (existingPost) isOwner = true;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[BlogStudio] My blogs verification check failed:', err.message);
+    }
+
+    if (!isOwner) {
+      console.error('[BlogStudio] ❌ Unauthorized edit attempt for blog:', editId);
+      _showBanner('You are not authorized to edit this blog.', 'error');
+      alert('You are not authorized to edit this blog.');
+      window.location.href = 'dashboard.html';
+      return;
+    }
+
     const pageHeaderTitle = document.querySelector('.page-title');
     const heroTitle = document.querySelector('.create-hero-banner h2');
     const publishBtn = document.getElementById('btn-publish');
@@ -298,25 +329,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (pageHeaderTitle) pageHeaderTitle.textContent = 'Edit Blog Studio';
     if (heroTitle) heroTitle.textContent = 'Edit Your Blog Story ✍️';
     if (publishBtn) publishBtn.textContent = 'Update Blog →';
-
-    let existingPost = null;
-    try {
-      const res = await fetch(`http://localhost:5000/api/blogs/${editId}`);
-      if (res.ok) {
-        const result = await res.json();
-        if (result.success && result.data) {
-          existingPost = result.data;
-        }
-      }
-    } catch (fetchErr) {
-      console.warn('[BlogStudio] Direct backend fetch failed, trying store cache:', fetchErr.message);
-    }
-
-    if (!existingPost && window.store) {
-      if (typeof window.store.fetchAllPosts === 'function') await window.store.fetchAllPosts();
-      const allPosts = window.store.getAllPosts() || [];
-      existingPost = allPosts.find(p => p.id === editId || p._id === editId);
-    }
 
     if (existingPost) {
       if (titleInput) titleInput.value = existingPost.title || '';
@@ -457,7 +469,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           Written by <strong>John Doe</strong> · ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
         </div>
       </div>
-      <div style="width:100%; aspect-ratio:16/9; max-height:360px; border-radius:16px; background-color:#F8FAFC; background-image:url('${coverUrl}'); background-size:contain; background-repeat:no-repeat; background-position:center; margin-bottom:24px; border:1px solid rgba(150,150,150,0.2);"></div>
       <div style="font-size:1.05rem; line-height:1.8;">
         ${content}
       </div>
@@ -472,8 +483,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       e.stopPropagation();
 
-      // ── STEP 1: Publish button clicked ─────────────────────
-      console.log('%c[STEP 1] Publish button clicked / Form submitted', 'color: #10B981; font-weight: bold;');
+      console.log('[Create Blog] Publish clicked');
       syncContent();
 
       const title    = titleInput     ? titleInput.value.trim()      : '';
@@ -481,9 +491,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const content  = contentEditor  ? contentEditor.innerHTML.trim(): '';
       const isDraftSubmit = e.submitter && e.submitter.getAttribute('name') === 'save-draft';
       const status   = isDraftSubmit ? 'draft' : 'published';
-
-      // ── STEP 2: Form validation ────────────────────────────
-      console.log('%c[STEP 2] Form values:', 'color: #3B82F6; font-weight: bold;', { title, category, contentLength: content.length, isDraftSubmit, status });
 
       if (!title) {
         return alert('❌ Blog title is required.');
@@ -495,9 +502,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return alert('❌ Blog content cannot be empty.');
       }
 
-      console.log('%c[STEP 2] ✅ Validation passed', 'color: #10B981;');
-
-      // ── STEP 3: Disable button & show progress ─────────────
       const submitBtn   = e.submitter || document.getElementById('btn-publish');
       const origBtnText = submitBtn ? submitBtn.textContent : 'Publish Blog →';
       if (submitBtn) {
@@ -505,21 +509,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         submitBtn.textContent = isDraftSubmit ? 'Saving Draft...' : 'Publishing...';
       }
 
-      // Remove any previous status banner
       const oldBanner = document.getElementById('_publish-status-banner');
       if (oldBanner) oldBanner.remove();
 
-      // ── STEP 4: JWT token check ────────────────────────────
+      console.log('[DEBUG CREATE] Publish clicked');
+
+      // Check JWT Token
       const token = localStorage.getItem('authToken');
-      console.log('%c[STEP 4] JWT Token from localStorage:', 'color: #F59E0B; font-weight: bold;', token ? `Bearer ${token.substring(0, 20)}...` : '❌ NO TOKEN FOUND');
+      console.log('[DEBUG CREATE] Current authToken exists:', Boolean(token));
+      console.log('[DEBUG CREATE] JWT:', token ? 'present' : 'not present');
 
       if (!token) {
+        console.error('[Create Blog] ❌ Blog was not saved');
         _showBanner('❌ Not logged in — no authToken in localStorage. Please log in again.', 'error');
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
         return;
       }
 
-      // ── STEP 5: Build request payload ─────────────────────
+      // Build payload
       const postPayload = {
         title,
         category,
@@ -533,17 +540,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         theme:    selectedThemeId || 'theme-01'
       };
 
+      console.log('[DEBUG CREATE] Request payload:', postPayload);
+
       const API_URL = editId ? `http://localhost:5000/api/blogs/${editId}` : 'http://localhost:5000/api/blogs';
       const HTTP_METHOD = editId ? 'PUT' : 'POST';
 
-      console.log(`%c[STEP 5] API URL: ${API_URL} (${HTTP_METHOD})`, 'color: #8B5CF6; font-weight: bold;');
-      console.log('%c[STEP 5] Request Headers:', 'color: #8B5CF6;', { 'Content-Type': 'application/json', Authorization: `Bearer ${token.substring(0, 20)}...` });
-      console.log('%c[STEP 5] Request Payload:', 'color: #8B5CF6;', { ...postPayload, coverImage: postPayload.coverImage ? '[base64 image present]' : 'none' });
+      console.log('[DEBUG CREATE] POST /api/blogs');
 
-      // ── STEP 6: Send fetch to POST or PUT /api/blogs ─────────────
       try {
-        console.log(`%c[STEP 6] Sending fetch ${HTTP_METHOD} ${API_URL}...`, 'color: #EC4899; font-weight: bold;');
-
         const response = await fetch(API_URL, {
           method:  HTTP_METHOD,
           headers: {
@@ -553,33 +557,28 @@ document.addEventListener('DOMContentLoaded', async () => {
           body: JSON.stringify(postPayload)
         });
 
-        // ── STEP 7: Response status ────────────────────────────
-        console.log('%c[STEP 7] Response HTTP Status:', 'color: #EC4899; font-weight: bold;', response.status, response.statusText);
+        console.log('[DEBUG CREATE] HTTP status:', response.status);
 
         let result;
         try {
           result = await response.json();
         } catch (jsonErr) {
-          console.error('[STEP 7] ❌ Could not parse JSON response:', jsonErr);
-          result = { success: false, message: 'Server returned non-JSON response.' };
+          result = { success: false, message: 'Server returned invalid response.' };
         }
 
-        // ── STEP 8: Full response body ─────────────────────────
-        console.log('%c[STEP 8] Response Body:', 'color: #EC4899; font-weight: bold;', result);
+        console.log('[DEBUG CREATE] Backend response:', result);
 
-        // ── STEP 9–14: Check result ─────────────────────────────
         if (!response.ok || !result.success) {
-          const errMsg = result.message || `HTTP ${response.status} — Server rejected the request.`;
-          console.error('%c[STEP 9] ❌ Blog NOT saved. Server error:', 'color: red; font-weight: bold;', errMsg);
-          _showBanner(`❌ Failed to ${editId ? 'update' : 'publish'}: ${errMsg}`, 'error');
+          console.error('[Create Blog] ❌ Blog was not saved');
+          const errMsg = result.message || `HTTP ${response.status} — Server error.`;
+          _showBanner(`❌ ${errMsg}`, 'error');
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
           return;
         }
 
-        // ── SUCCESS ────────────────────────────────────────────
-        console.log('%c[STEP 13] ✅ Blog saved to MongoDB successfully!', 'color: #10B981; font-weight: bold;', result.blog || result.data);
-        const successMsg = editId ? 'Blog updated successfully.' : `Blog "${title}" published successfully!`;
-        _showBanner(`✅ ${successMsg} Redirecting to dashboard...`, 'success');
+        console.log('[Create Blog] Blog successfully saved to MongoDB');
+        const successMsg = editId ? 'Blog updated successfully.' : 'Blog published successfully.';
+        _showBanner(successMsg, 'success');
 
         // Refresh cached posts in store
         if (window.store && typeof window.store.fetchAllPosts === 'function') {
@@ -592,15 +591,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (contentInputHidden) contentInputHidden.value  = '';
         uploadedImageData = '';
 
-        // Redirect after confirmed success
+        // Redirect ONLY after successful response
         setTimeout(() => {
           window.location.href = 'dashboard.html';
-        }, 1500);
+        }, 1200);
 
       } catch (networkErr) {
-        // ── NETWORK ERROR (backend not running / CORS) ─────────
-        console.error('%c[STEP 6] ❌ Network/Fetch Error:', 'color: red; font-weight: bold;', networkErr.message);
-        _showBanner(`❌ Cannot reach backend server at ${API_URL}. Ensure Node.js is running: cd backend && node server.js\n\nError: ${networkErr.message}`, 'error');
+        console.error('[Create Blog] ❌ Blog was not saved');
+        console.error('[Create Blog] Network error:', networkErr.message);
+        _showBanner(`❌ Cannot reach backend server. Error: ${networkErr.message}`, 'error');
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
       }
     });

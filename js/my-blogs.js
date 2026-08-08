@@ -76,19 +76,28 @@ async function loadMyBlogs(token) {
   `;
 
   try {
-    console.log('[MyBlogs API] Calling GET /api/blogs/myblogs...');
-    const response = await fetch('http://localhost:5000/api/blogs/myblogs', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
+    let result = null;
+
+    if (window.store && typeof window.store.fetchMyPosts === 'function') {
+      const storeRes = await window.store.fetchMyPosts();
+      if (storeRes && storeRes.success) {
+        result = { success: true, data: storeRes.data };
       }
-    });
+    }
 
-    const result = await response.json();
-    console.log('[MyBlogs API] Response:', result);
+    if (!result || !result.success) {
+      console.log('[MyBlogs API] Requesting http://localhost:5000/api/blogs/myblogs...');
+      const res = await fetch('http://localhost:5000/api/blogs/myblogs', {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        result = await res.json();
+      }
+    }
 
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to fetch your blogs');
+    if (!result || !result.success) {
+      throw new Error(result ? result.message : 'Failed to fetch your blogs');
     }
 
     const blogs = Array.isArray(result.data) ? result.data : [];
@@ -218,7 +227,7 @@ function renderMyBlogCards(container, blogs, token) {
           if (!res.ok || !resData.success) {
             showMyBlogsToast(`❌ ${resData.message || 'Failed to delete blog'}`, 'error');
           } else {
-            showMyBlogsToast('✅ Blog deleted successfully.', 'success');
+            showMyBlogsToast('Blog deleted successfully.', 'success');
             // Remove card element from DOM & reload list
             const cardEl = document.getElementById(`card-${activeDeleteId}`);
             if (cardEl) cardEl.remove();

@@ -58,7 +58,18 @@ const registerUser = async (req, res, next) => {
     // 5. Generate JWT token
     const token = generateToken(user._id);
 
-    // 6. Return success response (201 Created)
+    console.log(`[SIGNUP] User registered: ${user.email}`);
+
+    // 6. Send Welcome Email Notification (non-blocking safety block)
+    const sendWelcomeEmail = require('../utils/sendWelcomeEmail');
+    try {
+      await sendWelcomeEmail({ email: user.email, name: user.name });
+      console.log('[SIGNUP EMAIL] Welcome email notification sent successfully');
+    } catch (emailErr) {
+      console.log(`[SIGNUP EMAIL] Failed to send welcome notification: ${emailErr.message}`);
+    }
+
+    // 7. Return success response (201 Created)
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
@@ -124,7 +135,18 @@ const loginUser = async (req, res, next) => {
     // 4. Generate JWT Token
     const token = generateToken(user._id);
 
-    // 5. Return success response with token and user info
+    console.log(`[LOGIN] User authenticated: ${user.email}`);
+
+    // 5. Send Login Email Notification (non-blocking safety block)
+    const sendLoginEmail = require('../utils/sendLoginEmail');
+    try {
+      await sendLoginEmail({ email: user.email, name: user.name });
+      console.log('[LOGIN EMAIL] Notification sent successfully');
+    } catch (emailErr) {
+      console.log(`[LOGIN EMAIL] Failed to send notification: ${emailErr.message}`);
+    }
+
+    // 6. Return success response with token and user info
     res.status(200).json({
       success: true,
       message: 'Login successful',

@@ -21,15 +21,15 @@
 
       <div class="nav-links">
         <a class="active" href="index.html">Home</a>
-        <a href="#categories">Categories</a>
         <a href="dashboard.html">Dashboard</a>
         <a href="login.html">Login</a>
       </div>
 
       <div style="display:flex; align-items:center; gap:14px;">
-        <div class="search-input-box">
+        <div class="search-input-box" style="display:flex; align-items:center;">
           <span>🔍</span>
           <input id="blog-search" type="search" placeholder="Search blogs..." autocomplete="off">
+          <button type="button" id="clear-search-x-btn" title="Clear search" style="display:none; background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0 6px; font-weight:bold;">&times;</button>
         </div>
 
         <button class="icon-btn theme-toggle-btn" title="Toggle Mode" style="width:36px; height:36px; border:1px solid var(--line); border-radius:8px;">🌙</button>
@@ -67,9 +67,14 @@
 
     <!-- Latest Posts Section -->
     <section id="latest-posts" style="margin-bottom:40px;">
-      <div class="section-header">
+      <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
         <h2>Latest Posts</h2>
-        <a class="view-all-link" href="#latest-posts">View All</a>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button type="button" id="clear-filters-btn" style="display:none; padding:6px 14px; font-size:0.82rem; border-radius:8px; border:1px solid var(--line); background:var(--paper); color:var(--ink); font-weight:600; cursor:pointer;">
+            🧹 Clear Filters
+          </button>
+          <a class="view-all-link" href="#latest-posts">View All</a>
+        </div>
       </div>
 
       <p id="search-status" style="margin-bottom:12px; font-size:0.84rem; color:var(--muted);"></p>
@@ -84,6 +89,8 @@
         <button type="button" class="cat-chip" data-category="Business">Business <span class="chip-count" id="count-Business">(0)</span></button>
         <button type="button" class="cat-chip" data-category="Lifestyle">Lifestyle <span class="chip-count" id="count-Lifestyle">(0)</span></button>
         <button type="button" class="cat-chip" data-category="Education">Education <span class="chip-count" id="count-Education">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="Tutorial">Tutorial <span class="chip-count" id="count-Tutorial">(0)</span></button>
+        <button type="button" class="cat-chip" data-category="News">News <span class="chip-count" id="count-News">(0)</span></button>
       </div>
 
       <!-- Category Fallback Notice Message Banner -->
@@ -103,55 +110,7 @@
       </div>
     </section>
 
-    <!-- Categories Section -->
-    <section id="categories">
-      <div class="section-header">
-        <h2>Categories</h2>
-        <a class="view-all-link" href="#categories">View All</a>
-      </div>
 
-      <div class="categories-grid">
-        <div class="category-card" data-category="Technology">
-          <div class="category-icon-box icon-blue">💻</div>
-          <div>
-            <h4>Technology</h4>
-            <small>18 Posts</small>
-          </div>
-        </div>
-
-        <div class="category-card" data-category="Lifestyle">
-          <div class="category-icon-box icon-purple">❤️</div>
-          <div>
-            <h4>Lifestyle</h4>
-            <small>15 Posts</small>
-          </div>
-        </div>
-
-        <div class="category-card" data-category="Travel">
-          <div class="category-icon-box icon-green">✈️</div>
-          <div>
-            <h4>Travel</h4>
-            <small>12 Posts</small>
-          </div>
-        </div>
-
-        <div class="category-card" data-category="Food">
-          <div class="category-icon-box icon-orange">☕</div>
-          <div>
-            <h4>Food</h4>
-            <small>8 Posts</small>
-          </div>
-        </div>
-
-        <div class="category-card" data-category="Business">
-          <div class="category-icon-box icon-blue">💼</div>
-          <div>
-            <h4>Business</h4>
-            <small>10 Posts</small>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <!-- Newsletter Card Banner -->
     <section class="newsletter-card">

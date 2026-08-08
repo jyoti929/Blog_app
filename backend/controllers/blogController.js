@@ -5,6 +5,7 @@
  * ==========================================================================
  */
 
+const mongoose = require('mongoose');
 const Blog = require('../models/Blog');
 
 /**
@@ -14,10 +15,11 @@ const Blog = require('../models/Blog');
  */
 const createBlog = async (req, res, next) => {
   try {
-    console.log('[Backend Debug] Received POST /api/blogs request body:', req.body);
-    console.log('[Backend Debug] Authenticated author user ID:', req.user ? req.user._id : 'Unauthenticated');
+    console.log('[CREATE BLOG] Request received');
+    console.log('[CREATE BLOG] Authenticated user ID:', req.user ? req.user._id : 'Unauthenticated');
 
     const { title, content, category, imageUrl, imageData, coverImage, tags, template, theme, status } = req.body;
+    console.log('[CREATE BLOG] Blog payload received:', { title, category, status });
 
     // 1. Validation: Ensure title and story content are provided
     if (!title || !content) {
@@ -27,6 +29,8 @@ const createBlog = async (req, res, next) => {
         message: 'Please provide both title and story content for the blog post'
       });
     }
+
+    console.log('[CREATE BLOG] Saving blog to MongoDB');
 
     // 2. Create Blog Document in MongoDB (Author ID is automatically set from authenticated req.user._id)
     const blog = await Blog.create({
@@ -41,7 +45,8 @@ const createBlog = async (req, res, next) => {
       author: req.user._id
     });
 
-    console.log('[MongoDB Save] Blog inserted successfully into database collection:', { id: blog._id, title: blog.title });
+    console.log('[CREATE BLOG] MongoDB saved document ID:', blog._id);
+    console.log('[CREATE BLOG] MongoDB saved author ID:', blog.author);
 
     // 3. Populate author details (name and email) for response
     await blog.populate('author', 'name email profileImage');
@@ -67,11 +72,9 @@ const createBlog = async (req, res, next) => {
  */
 const getAllBlogs = async (req, res, next) => {
   try {
-    const filter = {};
+    const filter = { status: 'published' };
     if (req.query.status) {
       filter.status = req.query.status;
-    } else if (req.query.publishedOnly === 'true') {
-      filter.status = 'published';
     }
 
     if (req.query.category && req.query.category.trim().toLowerCase() !== 'all') {
@@ -88,16 +91,17 @@ const getAllBlogs = async (req, res, next) => {
       const regex = new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       blogs = blogs.filter(blog => {
         const titleMatch = regex.test(blog.title || '');
+        const contentMatch = regex.test(blog.content || '');
         const categoryMatch = regex.test(blog.category || '');
         const tagsMatch = Array.isArray(blog.tags) && blog.tags.some(t => regex.test(t));
         const authorName = blog.author ? (typeof blog.author === 'object' ? blog.author.name : blog.author) : '';
         const authorMatch = regex.test(authorName);
-        return titleMatch || categoryMatch || tagsMatch || authorMatch;
+        return titleMatch || contentMatch || categoryMatch || tagsMatch || authorMatch;
       });
     }
 
-    // Calculate live category counts directly from MongoDB
-    const allPublished = await Blog.find(req.query.status ? { status: req.query.status } : {});
+    // Calculate live category counts directly from MongoDB for published blogs
+    const allPublished = await Blog.find({ status: 'published' });
     const categoryCounts = { All: allPublished.length };
     allPublished.forEach(b => {
       const cat = b.category || 'General';
@@ -151,6 +155,19 @@ const getAllBlogs = async (req, res, next) => {
  */
 const getBlogById = async (req, res, next) => {
   try {
+    // Safety check: Delegate /my and /myblogs sub-routes to getMyBlogs
+    if (req.params.id === 'my' || req.params.id === 'myblogs') {
+      return getMyBlogs(req, res, next);
+    }
+
+    // Validate 24-char ObjectId format to prevent CastError
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Blog post not found'
+      });
+    }
+
     const blog = await Blog.findById(req.params.id).populate('author', 'name email profileImage');
 
     if (!blog) {
@@ -186,32 +203,53 @@ const getBlogById = async (req, res, next) => {
  */
 const updateBlog = async (req, res, next) => {
   try {
-    let blog = await Blog.findById(req.params.id);
+    // 1. Delete any author, owner, userId, or createdAt overrides passed in request body
+    delete req.body.author;
+    delete req.body.userId;
+    delete req.body.owner;
+    delete req.body.createdAt;
 
-    if (!blog) {
+    // 2. Prepare Update Payload
+    const { title, content, category, imageUrl, coverImage, imageData, tags, template, theme, status } = req.body;
+
+    const updateData = {};
+    if (title !== undefined) updateData.title = title.trim();
+    if (content !== undefined) updateData.content = content;
+    if (category !== undefined) updateData.category = category.trim();
+    if (coverImage || imageUrl || imageData) updateData.imageUrl = coverImage || imageData || imageUrl;
+    if (tags !== undefined) updateData.tags = Array.isArray(tags) ? tags : [];
+    if (template !== undefined) updateData.template = template;
+    if (theme !== undefined) updateData.theme = theme;
+    if (status !== undefined) updateData.status = status;
+
+    // 3. Security Authorization Update using explicit {_id, author: req.user._id} filter
+    const updatedBlog = await Blog.findOneAndUpdate(
+      { _id: req.params.id, author: req.user._id },
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('author', 'name email profileImage');
+
+    if (!updatedBlog) {
+      const blogExists = await Blog.findById(req.params.id);
+      if (blogExists) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to edit this blog.'
+        });
+      }
       return res.status(404).json({
         success: false,
         message: 'Blog post not found'
       });
     }
 
-    if (blog.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to update this blog post'
-      });
-    }
-
-    blog = await Blog.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('author', 'name email profileImage');
+    console.log('[MongoDB Update] Blog updated successfully:', updatedBlog._id);
 
     res.status(200).json({
       success: true,
-      message: 'Blog post updated successfully',
-      data: blog
+      message: 'Blog updated successfully.',
+      blog: updatedBlog,
+      data: updatedBlog
     });
 
   } catch (error) {
@@ -232,27 +270,31 @@ const updateBlog = async (req, res, next) => {
  */
 const deleteBlog = async (req, res, next) => {
   try {
-    const blog = await Blog.findById(req.params.id);
+    // Security Authorization Delete using explicit {_id, author: req.user._id} filter
+    const deletedBlog = await Blog.findOneAndDelete({
+      _id: req.params.id,
+      author: req.user._id
+    });
 
-    if (!blog) {
+    if (!deletedBlog) {
+      const blogExists = await Blog.findById(req.params.id);
+      if (blogExists) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to delete this blog.'
+        });
+      }
       return res.status(404).json({
         success: false,
         message: 'Blog post not found'
       });
     }
 
-    if (blog.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to delete this blog post'
-      });
-    }
-
-    await blog.deleteOne();
+    console.log('[MongoDB Delete] Blog deleted successfully:', req.params.id);
 
     res.status(200).json({
       success: true,
-      message: 'Blog post deleted successfully'
+      message: 'Blog deleted successfully.'
     });
 
   } catch (error) {
@@ -273,9 +315,12 @@ const deleteBlog = async (req, res, next) => {
  */
 const getMyBlogs = async (req, res, next) => {
   try {
+    console.log('[MY BLOGS] Authenticated user ID:', req.user ? req.user._id : 'Unauthenticated');
     const blogs = await Blog.find({ author: req.user._id })
       .populate('author', 'name email profileImage')
       .sort({ createdAt: -1 });
+
+    console.log('[MY BLOGS] Blogs found:', blogs.length);
 
     const formattedBlogs = blogs.map(blog => ({
       _id: blog._id,
@@ -286,6 +331,8 @@ const getMyBlogs = async (req, res, next) => {
       content: blog.content,
       status: blog.status || 'published',
       views: blog.views || 0,
+      author: blog.author ? (typeof blog.author === 'object' ? blog.author.name : 'Anonymous') : 'Anonymous',
+      authorDetails: blog.author,
       createdAt: blog.createdAt,
       updatedAt: blog.updatedAt
     }));

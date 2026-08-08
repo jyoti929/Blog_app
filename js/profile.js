@@ -244,25 +244,28 @@ async function apiFetchWithFallback(endpoints, options) {
  * ==========================================================================
  */
 async function fetchUserProfile(token) {
-  const endpoints = [
-    'http://localhost:5000/api/users/profile',
-    'http://localhost:5000/api/auth/profile',
-    'http://localhost:5000/api/auth/me'
-  ];
-
   try {
-    const res = await apiFetchWithFallback(endpoints, {
+    console.log('[Profile API] Fetching authenticated user profile from GET /api/auth/me...');
+    const response = await fetch('http://localhost:5000/api/auth/me', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
 
-    const result = res.data;
-    console.log('[Profile API] GET response:', result);
+    if (response.status === 401) {
+      console.warn('[Profile] Token invalid/expired (401). Redirecting to login.html...');
+      if (typeof Auth !== 'undefined') Auth.clearSessionData();
+      else localStorage.clear();
+      window.location.replace('login.html');
+      return;
+    }
 
-    if (!res.ok || !result.success || !result.user) {
-      console.warn('[Profile API] Fallback to Auth.getUserData()');
+    const result = await response.json();
+    console.log('[Profile API] Response:', result);
+
+    if (!response.ok || !result.success || !result.user) {
+      console.warn('[Profile API] Rendering fallback cached user data');
       renderProfileData(typeof Auth !== 'undefined' ? Auth.getUserData() : null);
       return;
     }

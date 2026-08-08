@@ -25,10 +25,11 @@ const { protect } = require('../middleware/authMiddleware');
 router.get('/', getAllBlogs);
 
 /**
- * @route   GET /api/blogs/myblogs
+ * @route   GET /api/blogs/my & GET /api/blogs/myblogs
  * @desc    Get logged-in user's blog posts only
  * @access  Private (Protected by JWT)
  */
+router.get('/my', protect, getMyBlogs);
 router.get('/myblogs', protect, getMyBlogs);
 
 /**
@@ -51,6 +52,7 @@ router.post('/', protect, createBlog);
  * @access  Private (Protected by JWT)
  */
 router.put('/:id', protect, updateBlog);
+router.patch('/:id', protect, updateBlog);
 
 /**
  * @route   DELETE /api/blogs/:id

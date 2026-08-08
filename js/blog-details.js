@@ -97,10 +97,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span>👁️ ${viewsCount.toLocaleString()} Views</span>
           </div>
         </div>
-      <!-- Story Content Body -->
-      <div class="post-story-body" style="font-size: 1.08rem; line-height: 1.85; margin-bottom: 36px; color: var(--text-main);">
-        ${content}
-      </div>
+
+        <!-- Story Content Body -->
+        <div class="post-story-body" style="font-size: 1.08rem; line-height: 1.85; margin-bottom: 36px; color: var(--text-main);">
+          ${content}
+        </div>
 
       <!-- Tags List -->
       ${tags.length > 0 ? `

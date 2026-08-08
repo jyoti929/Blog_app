@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Open+Sans:wght@400;600&family=Playfair+Display:wght@600;800&family=Poppins:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
-  <!-- Core Dashboard & Studio Stylesheets -->
+  <!-- Core Dashboard & Studio Stylesheets (Reusing Create Blog CSS & Tokens) -->
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/create-blog.css">
@@ -36,8 +36,11 @@
 
       <div class="sidebar-menu-label">Main Navigation</div>
       <nav class="sidebar-nav">
+        <a class="nav-item" href="index.html">
+          <span class="nav-icon">🏠</span> Home
+        </a>
         <a class="nav-item" href="dashboard.html">
-          <span class="nav-icon">🏠</span> Dashboard
+          <span class="nav-icon">📊</span> Dashboard
         </a>
         <a class="nav-item" href="my-blogs.html">
           <span class="nav-icon">📑</span> My Blogs
@@ -68,6 +71,9 @@
       <header class="top-navbar">
         <div class="navbar-left">
           <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle Menu">☰</button>
+          <a href="dashboard.html" style="text-decoration:none; color:var(--primary); font-weight:700; font-size:0.88rem; display:inline-flex; align-items:center; gap:6px; margin-right:12px;">
+            ← Back to Dashboard
+          </a>
           <h1 class="page-title">Edit Blog Studio</h1>
         </div>
 
@@ -87,7 +93,7 @@
 
           <a href="profile.html" class="user-profile-btn">
             <div class="avatar-img" id="userAvatar">JD</div>
-            <div class="user-name" id="userDisplayName">User ▾</div>
+            <div class="user-name" id="userDisplayName">John Doe ▾</div>
           </a>
         </div>
       </header>
@@ -95,177 +101,232 @@
       <!-- Dashboard Content Body -->
       <main class="dashboard-body">
 
-        <!-- 1. Large Colorful Hero Banner with Animated Gradient -->
+        <!-- 1. Large Hero Banner (Matching Create Blog UI) -->
         <section class="create-hero-banner">
           <div class="floating-shape-1"></div>
           <div class="floating-shape-2"></div>
 
-          <div class="hero-content-inner">
-            <div class="hero-tag">✏️ EDITING MODE</div>
-            <h2>Edit Your Blog Story ✍️</h2>
-            <p>Update your story title, category, cover image, tags, and theme styling.</p>
+          <div class="create-hero-content">
+            <div class="hero-sparkle-badge">
+              <span>✨</span> INSTANT EDITING STUDIO
+            </div>
+            <h1>✨ Edit Your Blog</h1>
+            <p>Update your story and keep your readers engaged.</p>
+          </div>
+
+          <div class="hero-illustration-box">
+            <span>✏️</span>
           </div>
         </section>
 
-        <!-- 2. Main Studio Grid Layout -->
-        <form id="create-blog-form" class="editor-main-grid">
+        <!-- Global Toast / Notice Alert -->
+        <div id="edit-notice-alert" style="display:none; margin-bottom:20px; padding:12px 18px; border-radius:10px; font-size:0.88rem; font-weight:600;"></div>
 
-          <!-- LEFT COLUMN: Main Form Inputs & Content Editor -->
-          <div class="editor-left-col">
+        <!-- Loading State View -->
+        <div id="edit-loading-view" style="text-align:center; padding:80px 20px; background:var(--paper); border:1px solid var(--line); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:2.2rem; margin-bottom:12px;">⌛</div>
+          <h3 style="font-size:1.2rem; font-weight:700; color:var(--ink);">Loading your blog...</h3>
+          <p style="color:var(--muted); font-size:0.86rem; margin-top:4px;">Fetching real blog data from MongoDB database.</p>
+        </div>
 
-            <!-- Title & Category Card -->
-            <div class="form-card">
-              <div class="form-field-group">
-                <label for="blog-title" class="field-label-custom">Blog Title <span class="req-star">*</span></label>
-                <input type="text" id="blog-title" name="title" class="input-styled" placeholder="Enter a descriptive story title..." required autocomplete="off">
+        <!-- Error / Unauthorized View -->
+        <div id="edit-error-view" style="display:none; text-align:center; padding:80px 20px; background:var(--paper); border:1px solid var(--line); border-radius:16px; margin-bottom:24px;">
+          <div style="font-size:2.8rem; margin-bottom:12px;">🚫</div>
+          <h3 id="edit-error-title" style="font-size:1.3rem; font-weight:800; color:var(--danger, #EF4444); margin-bottom:8px;">Blog not found</h3>
+          <p id="edit-error-message" style="color:var(--muted); font-size:0.9rem; max-width:440px; margin:0 auto 24px;">The requested blog post could not be found or you do not have permission to edit it.</p>
+          <a href="dashboard.html" class="btn-green" style="display:inline-flex; align-items:center; gap:8px; padding:10px 22px; text-decoration:none;">← Return to Dashboard</a>
+        </div>
+
+        <!-- Editor Form View (Matches Create Blog Layout) -->
+        <div id="edit-form-wrapper" style="display:none;">
+
+          <!-- 2. COMPACT VISUAL THEME SELECTION SECTION -->
+          <section class="theme-section">
+            <div style="margin-bottom:12px;">
+              <h2 style="font-size:1.3rem; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:8px;">
+                <span>🎨</span> Choose Theme
+              </h2>
+              <p style="font-size:0.84rem; color:var(--muted); margin-top:2px;">Select a theme for your blog appearance.</p>
+            </div>
+
+            <div class="theme-grid-visual" id="theme-grid-visual">
+              <!-- Dynamically rendered by js/edit-blog.js -->
+            </div>
+          </section>
+
+          <!-- 3. Single Clean Writing Card -->
+          <form id="edit-blog-form" novalidate>
+            <div class="simple-editor-card">
+              
+              <!-- 1. Blog Title -->
+              <div class="editor-field-row">
+                <label for="blog-title" class="field-label-clean">Blog Title *</label>
+                <input id="blog-title" name="title" type="text" class="title-input-large" placeholder="Enter your blog title..." required autocomplete="off">
               </div>
 
-              <div class="form-field-group" style="margin-bottom:0;">
-                <label for="blog-category" class="field-label-custom">Select Category <span class="req-star">*</span></label>
-                <select id="blog-category" name="category" class="select-styled" required>
-                  <option value="" disabled selected>Choose a category...</option>
+              <!-- 2. Category -->
+              <div class="editor-field-row">
+                <label for="blog-category" class="field-label-clean">Category *</label>
+                <select id="blog-category" name="category" class="category-select-clean" required>
                   <option value="Technology">💻 Technology</option>
                   <option value="Travel">✈️ Travel</option>
-                  <option value="Food">🍕 Food & Cooking</option>
-                  <option value="Lifestyle">🌿 Lifestyle</option>
-                  <option value="Business">💼 Business & Finance</option>
-                  <option value="AI">🤖 AI & Future</option>
-                  <option value="General">📰 General</option>
+                  <option value="Lifestyle">🎨 Lifestyle</option>
+                  <option value="Food">🍔 Food</option>
+                  <option value="Business">💼 Business</option>
+                  <option value="AI">🤖 AI</option>
+                  <option value="Tutorial">📚 Tutorial</option>
+                  <option value="News">📰 News</option>
+                  <option value="General">📝 General</option>
                 </select>
               </div>
-            </div>
 
-            <!-- Cover Image Upload Card -->
-            <div class="form-card">
-              <label class="field-label-custom">Cover Image</label>
-              
-              <div class="upload-dropzone" id="image-upload-area">
-                <input type="file" id="blog-image-file" accept="image/*" class="file-input-hidden">
-                <div class="upload-icon-circle">🖼️</div>
-                <div class="upload-text-main">Click or Drag & Drop Cover Image</div>
-                <div class="upload-text-sub">PNG, JPG, WebP up to 5MB</div>
-              </div>
+              <!-- 3. Featured Image Upload & Preview -->
+              <div class="editor-field-row">
+                <label class="field-label-clean">Featured Cover Image</label>
+                
+                <div class="image-upload-area" id="image-upload-area" onclick="document.getElementById('blog-image-file').click();">
+                  <input id="blog-image-file" type="file" accept="image/*" style="display:none;">
+                  <div class="upload-icon-circle">📸</div>
+                  <div class="upload-text-bold">Drag & drop cover photo here, or <span style="color:#10B981; text-decoration:underline;">browse files</span></div>
+                  <div class="upload-subtext">PNG, JPG, WEBP formats supported up to 5MB</div>
+                </div>
 
-              <div class="image-preview-card" id="cover-preview-box" style="display:none;">
-                <img id="cover-preview-img" src="" alt="Cover Preview">
-                <div class="preview-actions-bar">
-                  <button type="button" class="btn-icon-label" id="replace-cover-btn">✏️ Replace</button>
-                  <button type="button" class="btn-icon-label danger" id="remove-cover-btn">🗑️ Remove</button>
+                <div class="cover-preview-box" id="cover-preview-box" style="display:none;">
+                  <img id="cover-preview-img" src="" alt="Cover Photo Preview" style="width:100%; max-height:360px; object-fit:cover; display:block;">
+                  <div class="cover-btn-overlay">
+                    <button type="button" class="btn-cover-action" id="replace-cover-btn" onclick="document.getElementById('blog-image-file').click();">🔄 Replace Image</button>
+                    <button type="button" class="btn-cover-action" id="remove-cover-btn" style="background:#EF4444; color:#FFFFFF;">🗑️ Remove</button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Rich Text Editor Container Card -->
-            <div class="form-card editor-card-box">
-              <div class="editor-header-bar">
-                <span class="field-label-custom" style="margin:0;">Story Content <span class="req-star">*</span></span>
+              <!-- 4. Story Content Rich Text Editor & Sticky Toolbar -->
+              <div class="editor-field-row">
+                <label class="field-label-clean">Story Content *</label>
 
-                <!-- Formatting Toolbar -->
-                <div class="rich-toolbar">
+                <!-- Modern Floating Rich Text Toolbar -->
+                <div class="rich-toolbar" id="rich-toolbar">
+                  
+                  <select class="tb-select" id="fmt-heading" title="Headings">
+                    <option value="p">Normal Text</option>
+                    <option value="h1">Heading 1</option>
+                    <option value="h2">Heading 2</option>
+                    <option value="h3">Heading 3</option>
+                  </select>
+
+                  <select class="tb-select" id="fmt-font-family" title="Font Family">
+                    <option value="Poppins">Poppins</option>
+                    <option value="Inter">Inter</option>
+                    <option value="Roboto">Roboto</option>
+                    <option value="Open Sans">Open Sans</option>
+                    <option value="Lora">Lora</option>
+                    <option value="Playfair Display">Playfair Display</option>
+                  </select>
+
+                  <select class="tb-select" id="fmt-font-size" title="Font Size">
+                    <option value="1">12px</option>
+                    <option value="2">14px</option>
+                    <option value="3" selected>16px</option>
+                    <option value="4">18px</option>
+                    <option value="5">20px</option>
+                    <option value="6">24px</option>
+                    <option value="7">32px</option>
+                  </select>
+
+                  <div class="tb-divider"></div>
+
                   <button type="button" class="tb-btn" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
-                  <button type="button" class="tb-btn" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+                  <button type="button" class="tb-btn" data-cmd="italic" title="Italic (Ctrl+I)"><em>I</em></button>
                   <button type="button" class="tb-btn" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
                   <button type="button" class="tb-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+
                   <div class="tb-divider"></div>
-                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="H2" title="Heading 2">H2</button>
-                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="H3" title="Heading 3">H3</button>
-                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="P" title="Paragraph">P</button>
+
+                  <div class="tb-color-wrapper" title="Text Color">
+                    <span style="font-size:0.75rem; font-weight:700;">🎨</span>
+                    <input type="color" class="tb-color-input" id="fmt-text-color" value="#0F172A">
+                  </div>
+
+                  <div class="tb-color-wrapper" title="Highlight Color">
+                    <span style="font-size:0.75rem; font-weight:700;">🖌️</span>
+                    <input type="color" class="tb-color-input" id="fmt-bg-color" value="#FEF08A">
+                  </div>
+
                   <div class="tb-divider"></div>
+
+                  <button type="button" class="tb-btn" data-cmd="justifyLeft" title="Align Left">⬅️</button>
+                  <button type="button" class="tb-btn" data-cmd="justifyCenter" title="Align Center">↔️</button>
+                  <button type="button" class="tb-btn" data-cmd="justifyRight" title="Align Right">➡️</button>
+                  <button type="button" class="tb-btn" data-cmd="justifyFull" title="Justify Text">☰</button>
+
+                  <div class="tb-divider"></div>
+
                   <button type="button" class="tb-btn" data-cmd="insertUnorderedList" title="Bullet List">• List</button>
                   <button type="button" class="tb-btn" data-cmd="insertOrderedList" title="Numbered List">1. List</button>
-                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="BLOCKQUOTE" title="Quote">“ Quote</button>
+                  <button type="button" class="tb-btn" data-cmd="insertChecklist" title="Checklist">☑ Check</button>
+
                   <div class="tb-divider"></div>
-                  <button type="button" class="tb-btn" id="btn-insert-link" title="Insert Link">🔗 Link</button>
-                  <button type="button" class="tb-btn" id="btn-insert-image" title="Insert Image">📷 Image</button>
-                  <button type="button" class="tb-btn" id="btn-insert-code" title="Code Block">&lt;/&gt;</button>
+
+                  <button type="button" class="tb-btn" data-cmd="createLink" title="Insert Link">🔗</button>
+                  <button type="button" class="tb-btn" data-cmd="insertImage" title="Insert Image">🖼️</button>
+                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="blockquote" title="Quote">”</button>
+                  <button type="button" class="tb-btn" data-cmd="formatBlock" data-val="pre" title="Code Block">&lt;/&gt;</button>
+                  <button type="button" class="tb-btn" data-cmd="insertHorizontalRule" title="Horizontal Line">―</button>
+
+                  <div class="tb-divider"></div>
+
+                  <button type="button" class="tb-btn" data-cmd="undo" title="Undo (Ctrl+Z)">↩</button>
+                  <button type="button" class="tb-btn" data-cmd="redo" title="Redo (Ctrl+Y)">↪</button>
                   <button type="button" class="tb-btn" data-cmd="removeFormat" title="Clear Formatting">🧹</button>
+
+                </div>
+
+                <!-- Contenteditable Rich Text Editor Surface -->
+                <div id="blog-content-editor" contenteditable="true" class="content-editor-rich" placeholder="Write your story content here..."></div>
+                <textarea id="blog-content" name="content" style="display:none;"></textarea>
+              </div>
+
+              <!-- 5. Tags -->
+              <div class="editor-field-row" style="margin-bottom:0;">
+                <label for="tag-input-field" class="field-label-clean">Tags (Press Enter or Comma)</label>
+                <div class="tags-wrapper" id="tags-container">
+                  <input type="text" id="tag-input-field" class="tag-input-field" placeholder="Add tag...">
                 </div>
               </div>
 
-              <!-- Contenteditable Story Body Area -->
-              <div id="blog-content-editor" class="story-editor-body" contenteditable="true" data-placeholder="Update story content..."></div>
-              <textarea id="blog-content" name="content" hidden></textarea>
-            </div>
-
-            <!-- Tags Input Card -->
-            <div class="form-card">
-              <label for="tag-input-field" class="field-label-custom">Tags</label>
-              <div class="tags-input-wrapper">
-                <div class="tags-list" id="tags-container"></div>
-                <input type="text" id="tag-input-field" class="tag-bare-input" placeholder="Type tag and press Enter...">
+              <!-- 6. Action Buttons Bar -->
+              <div class="action-buttons-bar">
+                <button type="button" id="btn-cancel" class="btn-secondary" style="padding:10px 20px; font-weight:600; border-radius:10px; border:1px solid var(--line); background:var(--paper); color:var(--ink); cursor:pointer;">Cancel</button>
+                <button type="button" id="btn-save-draft" class="btn-action-draft">Save Draft</button>
+                <button type="button" class="btn-action-preview" id="btn-preview">👁️ Preview</button>
+                <button type="submit" id="btn-update-blog" name="update-post" class="btn-action-publish">Update Blog →</button>
               </div>
-              <small style="color:var(--text-sub); font-size:0.75rem; margin-top:6px; display:block;">Press Enter or comma to add tags.</small>
+
             </div>
+          </form>
 
-          </div>
+        </div>
 
-          <!-- RIGHT COLUMN: Theme Selector & Actions -->
-          <div class="editor-right-col">
-
-            <!-- Theme Selection Card -->
-            <div class="form-card">
-              <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:14px;">🎨 Select Visual Theme</h3>
-
-              <div class="theme-selector-grid" id="theme-grid">
-                <div class="theme-option-card active" data-theme="theme-01">
-                  <div class="theme-swatch t-preview-01"></div>
-                  <div class="theme-name">Emerald Clean</div>
-                </div>
-                <div class="theme-option-card" data-theme="theme-02">
-                  <div class="theme-swatch t-preview-02"></div>
-                  <div class="theme-name">Dark Mode Slate</div>
-                </div>
-                <div class="theme-option-card" data-theme="theme-03">
-                  <div class="theme-swatch t-preview-03"></div>
-                  <div class="theme-name">Minimalist Light</div>
-                </div>
-                <div class="theme-option-card" data-theme="theme-04">
-                  <div class="theme-swatch t-preview-04"></div>
-                  <div class="theme-name">Indigo Gradient</div>
-                </div>
-                <div class="theme-option-card" data-theme="theme-05">
-                  <div class="theme-swatch t-preview-05"></div>
-                  <div class="theme-name">Warm Crimson</div>
-                </div>
-                <div class="theme-option-card" data-theme="theme-06">
-                  <div class="theme-swatch t-preview-06"></div>
-                  <div class="theme-name">Amber Sunshine</div>
-                </div>
-                <div class="theme-option-card" data-theme="theme-07">
-                  <div class="theme-swatch t-preview-07"></div>
-                  <div class="theme-name">Purple Sunset</div>
-                </div>
-                <div class="theme-option-card" data-theme="theme-08">
-                  <div class="theme-swatch t-preview-08"></div>
-                  <div class="theme-name">Monochrome Noir</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Action Buttons Card -->
-            <div class="form-card">
-              <button type="submit" id="btn-publish" name="publish" class="btn btn-primary" style="width:100%; padding:14px; font-size:1rem; margin-bottom:10px;">
-                Update Blog →
-              </button>
-              <button type="submit" id="btn-save-draft" name="save-draft" class="btn btn-secondary" style="width:100%; padding:12px; font-size:0.9rem;">
-                💾 Save Draft
-              </button>
-              <a href="dashboard.html" class="btn btn-secondary" style="display:block; text-align:center; margin-top:10px; padding:10px;">
-                Cancel & Return
-              </a>
-            </div>
-
-          </div>
-
-        </form>
       </main>
-
     </div>
   </div>
 
-  <!-- JavaScript Modules -->
+  <!-- Live Preview Modal Overlay (Matching Create Blog UI) -->
+  <div class="preview-modal-overlay" id="previewModalOverlay">
+    <div class="preview-card-frame">
+      <div class="preview-top-bar">
+        <strong style="font-size:1.05rem; color:#0F172A;">✨ Live Story Preview</strong>
+        <button type="button" id="close-preview-btn" style="font-size:1.4rem; cursor:pointer; border:none; background:none; color:#64748B;">&times;</button>
+      </div>
+
+      <div class="preview-body-content" id="preview-body-content">
+        <!-- Rendered dynamically by js/edit-blog.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Controllers -->
   <script src="js/store.js"></script>
-  <script src="js/script.js"></script>
-  <script src="js/create-blog.js"></script>
+  <script src="js/edit-blog.js"></script>
 </body>
 </html>

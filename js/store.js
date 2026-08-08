@@ -20,6 +20,95 @@ window.store = {
     return headers;
   },
 
+  // ── GET /api/blogs/my or /api/blogs/myblogs ─────────────────
+  async fetchMyPosts() {
+    try {
+      console.log('[Store] Fetching logged-in user blogs...');
+      const headers = this.getHeaders();
+      if (headers['Authorization']) {
+        console.log('[Store] Authorization header attached.');
+      } else {
+        console.warn('[Store] Authorization header missing!');
+      }
+
+      const endpoints = [
+        `${STORE_BLOGS_URL}/myblogs`,
+        `${STORE_BLOGS_URL}/my`
+      ];
+
+      let response = null;
+      let result = null;
+
+      for (const url of endpoints) {
+        try {
+          response = await fetch(url, { method: 'GET', headers });
+          if (response.status === 404) {
+            console.warn(`[Store] ${url} returned 404. Trying fallback endpoint...`);
+            continue;
+          }
+          result = await response.json();
+          break;
+        } catch (e) {
+          console.warn(`[Store] Fetch error for ${url}:`, e.message);
+        }
+      }
+
+      if (!response) {
+        throw new Error('Could not connect to user blogs endpoint.');
+      }
+
+      console.log('[Store] fetchMyPosts() → HTTP status:', response.status);
+
+      if (response.status === 401) {
+        console.warn('[Store] 401 Unauthorized received. Clearing token...');
+        if (typeof Auth !== 'undefined') {
+          Auth.clearSessionData();
+          window.location.replace('login.html');
+        }
+        return { success: false, status: 401, message: 'Session expired. Please log in again.' };
+      }
+
+      if (response.status === 403) {
+        console.error('[Store] 403 Forbidden received.');
+        return { success: false, status: 403, message: 'You are not authorized to view these blogs.' };
+      }
+
+      if (!response.ok || !result || !result.success) {
+        console.error('[Store] GET /api/blogs/my failed');
+        console.error('HTTP status:', response ? response.status : 'N/A');
+        console.error('Response:', result);
+        return { success: false, status: response ? response.status : 500, message: result ? result.message : 'Failed to fetch blogs' };
+      }
+
+      const postsData = Array.isArray(result.data) ? result.data : [];
+      console.log(`[Store] Received ${postsData.length} blogs.`);
+
+      this.cachedPosts = postsData.map(p => ({
+        id:        p._id  || p.id,
+        _id:       p._id  || p.id,
+        title:     p.title,
+        content:   p.content,
+        category:  p.category  || 'General',
+        imageUrl:  p.imageUrl  || p.coverImage || '',
+        imageData: p.imageUrl  || p.coverImage || '',
+        status:    p.status    || 'published',
+        theme:     p.theme     || 'theme-01',
+        template:  p.template  || 'blank',
+        tags:      p.tags      || [],
+        views:     p.views     || 0,
+        author:    p.author    ? (typeof p.author === 'object' ? p.author.name : p.author) : 'Anonymous',
+        date:      p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+        createdAt: p.createdAt || new Date().toISOString()
+      }));
+
+      return { success: true, count: this.cachedPosts.length, data: this.cachedPosts };
+
+    } catch (err) {
+      console.error('[Store] fetchMyPosts() → ❌ Network/fetch error:', err.message);
+      return { success: false, message: err.message };
+    }
+  },
+
   // ── GET /api/blogs ─────────────────────────────────────────
   async fetchAllPosts() {
     try {
@@ -104,6 +193,7 @@ window.store = {
   // ── POST /api/blogs ────────────────────────────────────────
   async createPost(postData) {
     try {
+      console.log('[DEBUG STORE] createPost() called for POST /api/blogs (User explicitly clicked submit)');
       const headers = this.getHeaders();
       console.log('[Store] createPost() → Authorization header present:', Boolean(headers['Authorization']));
 

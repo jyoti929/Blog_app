@@ -1,0 +1,103 @@
+/**
+ * ==========================================================================
+ * EDIT BLOG STUDIO STYLESHEET (css/edit-blog.css)
+ * 2-Column Responsive Workspace for Editing Blogs
+ * ==========================================================================
+ */
+
+.edit-studio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.edit-workspace {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+  align-items: start;
+}
+
+.edit-editor-col {
+  min-width: 0;
+}
+
+.edit-preview-col {
+  position: sticky;
+  top: 90px;
+}
+
+.live-preview-sticky-card {
+  background: var(--paper, #FFFFFF);
+  border: 1px solid var(--line, #E2E8F0);
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+  overflow: hidden;
+}
+
+.preview-card-header {
+  padding: 14px 20px;
+  background: var(--bg-subtle, #F8FAFC);
+  border-bottom: 1px solid var(--line, #E2E8F0);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink, #0F172A);
+}
+
+.preview-live-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: #10B981;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.preview-card-body {
+  padding: 24px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.theme-chip-card {
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  background: var(--paper);
+}
+
+.theme-chip-card:hover {
+  border-color: #10B981;
+  transform: translateY(-2px);
+}
+
+.theme-chip-card.active {
+  border-color: #10B981;
+  background: #ECFDF5;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Tablet & Mobile Responsive Stack */
+@media (max-width: 992px) {
+  .edit-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-preview-col {
+    position: static;
+    margin-top: 24px;
+  }
+}

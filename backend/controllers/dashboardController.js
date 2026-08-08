@@ -22,6 +22,16 @@ const getDashboardAnalytics = async (req, res, next) => {
     // 7 days ago date calculation (Current Week Activity)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized to access dashboard analytics'
+      });
+    }
+
+    // Private Dashboard User Ownership Filter (Enforces backend user isolation)
+    const userFilter = { author: req.user._id };
+
     // Run MongoDB queries concurrently using Promise.all for maximum performance
     const [
       totalBlogs,
@@ -40,51 +50,54 @@ const getDashboardAnalytics = async (req, res, next) => {
       weeklyActivityAggregation,
       recentBlogsList
     ] = await Promise.all([
-      // 1. Total Blogs Count
-      Blog.countDocuments(),
+      // 1. Total Blogs Count for authenticated user
+      Blog.countDocuments(userFilter),
 
       // 2. Published Blogs Count
-      Blog.countDocuments({ status: 'published' }),
+      Blog.countDocuments({ ...userFilter, status: 'published' }),
 
       // 3. Draft Blogs Count
-      Blog.countDocuments({ status: 'draft' }),
+      Blog.countDocuments({ ...userFilter, status: 'draft' }),
 
       // 4. Total Views Aggregate Sum
       Blog.aggregate([
+        { $match: userFilter },
         { $group: { _id: null, totalViews: { $sum: '$views' } } }
       ]),
 
       // 5. Unique Categories List
-      Blog.distinct('category'),
+      Blog.distinct('category', userFilter),
 
       // 6. Unique Tags List
-      Blog.distinct('tags'),
+      Blog.distinct('tags', userFilter),
 
       // 7. Blogs Created This Month Count
-      Blog.countDocuments({ createdAt: { $gte: startOfMonth } }),
+      Blog.countDocuments({ ...userFilter, createdAt: { $gte: startOfMonth } }),
 
       // 8. Blogs Created This Week Count (Last 7 Days)
-      Blog.countDocuments({ createdAt: { $gte: sevenDaysAgo } }),
+      Blog.countDocuments({ ...userFilter, createdAt: { $gte: sevenDaysAgo } }),
 
       // 9. Latest Created Blog
-      Blog.findOne().sort({ createdAt: -1 }).select('title category status views createdAt imageUrl author').populate('author', 'name'),
+      Blog.findOne(userFilter).sort({ createdAt: -1 }).select('title category status views createdAt imageUrl author').populate('author', 'name'),
 
       // 10. Most Viewed Blog
-      Blog.findOne().sort({ views: -1 }).select('title category status views createdAt imageUrl author').populate('author', 'name'),
+      Blog.findOne(userFilter).sort({ views: -1 }).select('title category status views createdAt imageUrl author').populate('author', 'name'),
 
       // 11. Categories Distribution (Count per Category)
       Blog.aggregate([
+        { $match: userFilter },
         { $group: { _id: '$category', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]),
 
       // 12. Top 5 Most Viewed Blogs for Charts
-      Blog.find().sort({ views: -1 }).limit(5).select('title views category'),
+      Blog.find(userFilter).sort({ views: -1 }).limit(5).select('title views category'),
 
       // 13. Monthly Published Blogs Aggregation (Last 6 Months)
       Blog.aggregate([
         {
           $match: {
+            ...userFilter,
             createdAt: { $gte: new Date(now.getFullYear(), now.getMonth() - 5, 1) }
           }
         },
@@ -102,7 +115,7 @@ const getDashboardAnalytics = async (req, res, next) => {
 
       // 14. Weekly Activity Aggregation (Last 7 Days by Day)
       Blog.aggregate([
-        { $match: { createdAt: { $gte: sevenDaysAgo } } },
+        { $match: { ...userFilter, createdAt: { $gte: sevenDaysAgo } } },
         {
           $group: {
             _id: { $dayOfWeek: '$createdAt' }, // 1 = Sun, 2 = Mon, ... 7 = Sat
@@ -113,7 +126,7 @@ const getDashboardAnalytics = async (req, res, next) => {
       ]),
 
       // 15. Recent 5 Blogs List for Activity Log
-      Blog.find().sort({ createdAt: -1 }).limit(5).select('title status category createdAt views')
+      Blog.find(userFilter).sort({ createdAt: -1 }).limit(5).select('title status category createdAt views')
     ]);
 
     // Extract Total Views Sum (default to 0 if empty collection)
