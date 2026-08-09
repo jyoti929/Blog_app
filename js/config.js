@@ -11,7 +11,7 @@ window.API_BASE_URL = (
   window.location.hostname === "127.0.0.1"
 )
   ? "http://localhost:5000/api"
-  : "RENDER_BACKEND_URL_PLACEHOLDER/api";
+  : "https://blog-app-ybg6.onrender.com";
 
 // Helper accessor for modules/scripts
 if (typeof module !== 'undefined' && module.exports) {
