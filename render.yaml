@@ -1,0 +1,15 @@
+# ==========================================================================
+# RENDER DEPLOYMENT BLUEPRINT (render.yaml)
+# Configuration for Node.js Express REST API Backend
+# ==========================================================================
+
+services:
+  - type: web
+    name: blogify-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production

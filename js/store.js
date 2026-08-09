@@ -5,8 +5,8 @@
  * ==========================================================================
  */
 
-const STORE_API_BASE  = 'http://localhost:5000/api';
-const STORE_BLOGS_URL = `${STORE_API_BASE}/blogs`;
+const getStoreApiBase  = () => window.API_BASE_URL || 'http://localhost:5000/api';
+const getStoreBlogsUrl = () => `${getStoreApiBase()}/blogs`;
 
 window.store = {
   cachedPosts: [],
@@ -32,8 +32,8 @@ window.store = {
       }
 
       const endpoints = [
-        `${STORE_BLOGS_URL}/myblogs`,
-        `${STORE_BLOGS_URL}/my`
+        `${getStoreBlogsUrl()}/myblogs`,
+        `${getStoreBlogsUrl()}/my`
       ];
 
       let response = null;
@@ -112,8 +112,8 @@ window.store = {
   // ── GET /api/blogs ─────────────────────────────────────────
   async fetchAllPosts() {
     try {
-      console.log('[Store] fetchAllPosts() → calling GET', STORE_BLOGS_URL);
-      const response = await fetch(STORE_BLOGS_URL);
+      console.log('[Store] fetchAllPosts() → calling GET', getStoreBlogsUrl());
+      const response = await fetch(getStoreBlogsUrl());
       console.log('[Store] fetchAllPosts() → HTTP status:', response.status);
 
       const result = await response.json();
@@ -157,7 +157,7 @@ window.store = {
 
     } catch (err) {
       console.error('[Store] fetchAllPosts() → ❌ Network/fetch error:', err.message);
-      console.error('        → Is the backend running at http://localhost:5000 ?');
+      console.error(`        → Is the backend running at ${getStoreApiBase()} ?`);
       return this.cachedPosts;
     }
   },
@@ -210,7 +210,7 @@ window.store = {
       };
       console.log('[Store] createPost() → payload to send:', { ...payload, coverImage: payload.coverImage ? '[image data present]' : 'none' });
 
-      const response = await fetch(STORE_BLOGS_URL, {
+      const response = await fetch(getStoreBlogsUrl(), {
         method:  'POST',
         headers,
         body:    JSON.stringify(payload)
@@ -241,7 +241,7 @@ window.store = {
   async fetchAnalytics() {
     try {
       console.log('[Store] fetchAnalytics() → calling GET /api/dashboard/analytics');
-      const response = await fetch(`${STORE_API_BASE}/dashboard/analytics`, {
+      const response = await fetch(`${getStoreApiBase()}/dashboard/analytics`, {
         headers: this.getHeaders()
       });
       const result = await response.json();
@@ -258,7 +258,7 @@ window.store = {
   // ── DELETE /api/blogs/:id ──────────────────────────────────
   async deletePost(id) {
     try {
-      const response = await fetch(`${STORE_BLOGS_URL}/${id}`, {
+      const response = await fetch(`${getStoreBlogsUrl()}/${id}`, {
         method:  'DELETE',
         headers: this.getHeaders()
       });

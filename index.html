@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/config.js"></script>
   <script src="js/theme.js"></script>
 </head>
 <body>
@@ -122,10 +123,11 @@
         </div>
       </div>
 
-      <form class="newsletter-form" onsubmit="event.preventDefault(); showToast('Subscribed to newsletter!');">
-        <input type="email" placeholder="Enter your email" required>
-        <button class="btn-green" type="submit">Subscribe</button>
+      <form class="newsletter-form" id="newsletter-form" novalidate>
+        <input type="email" id="newsletter-email" placeholder="Enter your email" required autocomplete="off">
+        <button class="btn-green" id="newsletter-submit-btn" type="submit">Subscribe</button>
       </form>
+      <div id="newsletter-message" style="display:none; font-size:0.86rem; font-weight:600; margin-top:12px; border-radius:8px; padding:8px 14px;"></div>
     </section>
   </main>
 

@@ -81,8 +81,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     console.log('[Edit Blog] Loading blog...');
 
+    const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+
     // Fetch Authenticated User Profile
-    const meRes = await fetch('http://localhost:5000/api/auth/me', {
+    const meRes = await fetch(`${apiBase}/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
@@ -102,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Fetch Real MongoDB Blog Document: GET /api/blogs/:id
-    const blogRes = await fetch(`http://localhost:5000/api/blogs/${blogId}`);
+    const blogRes = await fetch(`${apiBase}/blogs/${blogId}`);
     if (!blogRes.ok) {
       if (blogRes.status === 404) {
         showErrorView('Blog not found.', 'The requested blog post could not be found or has been deleted.');
@@ -507,7 +509,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-      const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`, {
+      const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${apiBase}/blogs/${blogId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

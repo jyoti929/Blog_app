@@ -506,7 +506,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       try {
-        const res = await fetch('http://localhost:5000/api/blogs');
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${apiBase}/blogs`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
@@ -519,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         console.error('[Homepage API Error]:', err.message);
-        fetchError = 'Could not connect to backend server at http://localhost:5000.';
+        fetchError = 'Could not connect to backend server. Please verify your connection.';
       }
 
       renderHomePosts();
@@ -814,6 +815,87 @@ document.addEventListener('DOMContentLoaded', () => {
       // create-blog.js handles this — do nothing here
       // This prevents double-submission via script.js
     });
+  }
+
+  // ============================================================
+  // NEWSLETTER SUBSCRIPTION FORM CONTROLLER
+  // ============================================================
+  const newsletterForm = document.getElementById('newsletter-form');
+  const newsletterEmailInput = document.getElementById('newsletter-email');
+  const newsletterSubmitBtn = document.getElementById('newsletter-submit-btn');
+  const newsletterMessage = document.getElementById('newsletter-message');
+
+  if (newsletterForm) {
+    newsletterForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      console.log('[Newsletter] Subscribe button clicked');
+
+      const emailVal = newsletterEmailInput ? newsletterEmailInput.value.trim() : '';
+
+      // Frontend Email Validation
+      if (!emailVal) {
+        showNewsletterAlert('Please enter a valid email address.', 'danger');
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(emailVal)) {
+        showNewsletterAlert('Please enter a valid email address.', 'danger');
+        return;
+      }
+
+      // Loading State
+      if (newsletterSubmitBtn) {
+        newsletterSubmitBtn.disabled = true;
+        newsletterSubmitBtn.textContent = 'Subscribing...';
+      }
+
+      console.log('[Newsletter] Sending subscription request');
+
+      try {
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+        const response = await fetch(`${apiBase}/newsletter/subscribe`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: emailVal })
+        });
+
+        const resData = await response.json();
+        console.log('[Newsletter] API response:', resData);
+
+        if (response.ok && resData.success) {
+          console.log('[Newsletter] Subscription successful');
+          showNewsletterAlert(resData.message || 'Successfully subscribed to our newsletter!', 'success');
+          if (newsletterEmailInput) newsletterEmailInput.value = '';
+          if (window.showToast) window.showToast('Successfully subscribed!');
+        } else {
+          const errMsg = resData.message || 'Unable to subscribe right now. Please try again.';
+          console.log('[Newsletter] Subscription failed:', errMsg);
+          showNewsletterAlert(errMsg, 'danger');
+        }
+
+      } catch (err) {
+        console.error('[Newsletter] Subscription network error:', err.message);
+        showNewsletterAlert('Unable to subscribe right now. Please try again.', 'danger');
+      } finally {
+        if (newsletterSubmitBtn) {
+          newsletterSubmitBtn.disabled = false;
+          newsletterSubmitBtn.textContent = 'Subscribe';
+        }
+      }
+    });
+  }
+
+  function showNewsletterAlert(msg, type = 'success') {
+    if (!newsletterMessage) return;
+    newsletterMessage.style.display = 'block';
+    newsletterMessage.style.background = type === 'success' ? '#DCFCE7' : '#FEE2E2';
+    newsletterMessage.style.color = type === 'success' ? '#166534' : '#991B1B';
+    newsletterMessage.style.border = type === 'success' ? '1px solid #86EFAC' : '1px solid #FCA5A5';
+    newsletterMessage.textContent = msg;
   }
 });
 

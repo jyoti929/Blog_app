@@ -299,7 +299,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       if (token) {
-        const myRes = await fetch('http://localhost:5000/api/blogs/my', {
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+        const myRes = await fetch(`${apiBase}/blogs/my`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (myRes.ok) {
@@ -542,7 +543,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       console.log('[DEBUG CREATE] Request payload:', postPayload);
 
-      const API_URL = editId ? `http://localhost:5000/api/blogs/${editId}` : 'http://localhost:5000/api/blogs';
+      const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+      const API_URL = editId ? `${apiBase}/blogs/${editId}` : `${apiBase}/blogs`;
       const HTTP_METHOD = editId ? 'PUT' : 'POST';
 
       console.log('[DEBUG CREATE] POST /api/blogs');

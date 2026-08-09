@@ -15,13 +15,17 @@ const Blog = require('../models/Blog');
  */
 const getUserProfile = async (req, res, next) => {
   try {
+    console.log('[PROFILE] Fetching logged-in user');
     const user = await User.findById(req.user._id).select('-password');
     if (!user) {
+      console.error('[PROFILE] Profile update failed: User profile not found in database');
       return res.status(404).json({
         success: false,
         message: 'User profile not found in database'
       });
     }
+
+    console.log('[PROFILE] User profile loaded');
 
     // Calculate real user blog statistics directly from MongoDB
     const userId = req.user._id;
@@ -66,7 +70,7 @@ const getUserProfile = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error('[User Controller Error] getUserProfile:', error.message);
+    console.error('[PROFILE] Profile update failed:', error.message);
     next(error);
   }
 };
@@ -78,9 +82,11 @@ const getUserProfile = async (req, res, next) => {
  */
 const updateUserProfile = async (req, res, next) => {
   try {
+    console.log('[PROFILE] Updating profile');
     const user = await User.findById(req.user._id);
 
     if (!user) {
+      console.error('[PROFILE] Profile update failed: User profile not found');
       return res.status(404).json({
         success: false,
         message: 'User profile not found in database'
@@ -99,7 +105,7 @@ const updateUserProfile = async (req, res, next) => {
 
     const updatedUser = await user.save();
 
-    console.log('[MongoDB Update] User profile updated successfully:', updatedUser._id);
+    console.log('[PROFILE] Profile updated successfully');
 
     res.status(200).json({
       success: true,
@@ -120,7 +126,7 @@ const updateUserProfile = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error('[User Controller Error] updateUserProfile:', error.message);
+    console.error('[PROFILE] Profile update failed:', error.message);
     next(error);
   }
 };

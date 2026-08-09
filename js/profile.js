@@ -110,10 +110,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         submitBtn.textContent = 'Saving...';
       }
 
+      const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
       const endpoints = [
-        'http://localhost:5000/api/users/profile',
-        'http://localhost:5000/api/auth/profile',
-        'http://localhost:5000/api/auth/me'
+        `${apiBase}/users/profile`,
+        `${apiBase}/auth/profile`,
+        `${apiBase}/auth/me`
       ];
 
       const payload = JSON.stringify({
@@ -146,10 +147,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (result.user) {
           localStorage.setItem('user_data', JSON.stringify(result.user));
+          localStorage.setItem('user', JSON.stringify(result.user));
           if (result.user.email) localStorage.setItem('loggedInUser', result.user.email);
         }
 
-        showProfileToast('✅ Profile updated successfully!', 'success');
+        showProfileToast('Profile updated successfully!', 'success');
         closeModal();
 
         // Refresh real data from MongoDB
@@ -245,8 +247,9 @@ async function apiFetchWithFallback(endpoints, options) {
  */
 async function fetchUserProfile(token) {
   try {
-    console.log('[Profile API] Fetching authenticated user profile from GET /api/auth/me...');
-    const response = await fetch('http://localhost:5000/api/auth/me', {
+    console.log('[PROFILE] Fetching logged-in user');
+    const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiBase}/users/profile`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -262,7 +265,7 @@ async function fetchUserProfile(token) {
     }
 
     const result = await response.json();
-    console.log('[Profile API] Response:', result);
+    console.log('[PROFILE] User profile loaded');
 
     if (!response.ok || !result.success || !result.user) {
       console.warn('[Profile API] Rendering fallback cached user data');
@@ -270,10 +273,15 @@ async function fetchUserProfile(token) {
       return;
     }
 
+    // Sync localStorage user objects so navbar & dashboard update immediately
+    localStorage.setItem('user_data', JSON.stringify(result.user));
+    localStorage.setItem('user', JSON.stringify(result.user));
+    if (result.user.email) localStorage.setItem('loggedInUser', result.user.email);
+
     renderProfileData(result.user);
 
   } catch (err) {
-    console.error('[Profile API Error]:', err.message);
+    console.error('[PROFILE] Profile update failed:', err.message);
     const fallbackUser = typeof Auth !== 'undefined' ? Auth.getUserData() : null;
     renderProfileData(fallbackUser);
   }

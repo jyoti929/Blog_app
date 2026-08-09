@@ -5,10 +5,12 @@
  * ==========================================================================
  */
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = window.API_BASE_URL || 'http://localhost:5000/api';
 
 const Auth = {
-  API_BASE_URL,
+  get API_BASE_URL() {
+    return window.API_BASE_URL || 'http://localhost:5000/api';
+  },
 
   // Retrieve stored JWT Token
   getToken() {
@@ -139,7 +141,7 @@ const Auth = {
       console.error('[Auth API Error] Network or server error during login:', err);
       return {
         success: false,
-        message: 'Could not connect to backend server. Ensure Node.js backend is running on port 5000.'
+        message: 'Could not connect to backend server. Please verify your connection or try again later.'
       };
     }
   },
@@ -182,7 +184,7 @@ const Auth = {
       console.error('[Auth API Error] Network or server error during registration:', err);
       return {
         success: false,
-        message: 'Could not connect to backend server. Ensure Node.js backend is running on port 5000.'
+        message: 'Could not connect to backend server. Please verify your connection or try again later.'
       };
     }
   },

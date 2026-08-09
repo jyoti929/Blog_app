@@ -84,8 +84,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
 
       try {
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
         console.log('[Settings] Submitting PUT /api/users/profile...');
-        const res = await fetch('http://localhost:5000/api/users/profile', {
+        const res = await fetch(`${apiBase}/users/profile`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -180,8 +181,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Updating...'; }
 
       try {
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
         console.log('[Settings] Submitting PUT /api/users/change-password...');
-        const res = await fetch('http://localhost:5000/api/users/change-password', {
+        const res = await fetch(`${apiBase}/users/change-password`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -223,7 +225,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       const autoSaveDrafts       = document.getElementById('sw-autosave')?.checked;
 
       try {
-        const res = await fetch('http://localhost:5000/api/users/preferences', {
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${apiBase}/users/preferences`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -267,7 +270,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Save preference to MongoDB backend
       try {
-        await fetch('http://localhost:5000/api/users/preferences', {
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+        await fetch(`${apiBase}/users/preferences`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -307,8 +311,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (confirmDelete && deleteModal) {
     confirmDelete.addEventListener('click', async () => {
       try {
+        const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
         console.log('[Settings] Sending DELETE /api/users/account...');
-        const res = await fetch('http://localhost:5000/api/users/account', {
+        const res = await fetch(`${apiBase}/users/account`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -373,8 +378,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function fetchUserSettings(token) {
     try {
+      const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
       console.log('[Settings API] Fetching user profile...');
-      const res = await fetch('http://localhost:5000/api/users/profile', {
+      const res = await fetch(`${apiBase}/users/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();

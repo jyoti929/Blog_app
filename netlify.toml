@@ -1,0 +1,13 @@
+# ==========================================================================
+# NETLIFY DEPLOYMENT CONFIGURATION (netlify.toml)
+# Static Site Hosting configuration for Blogify Frontend
+# ==========================================================================
+
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"

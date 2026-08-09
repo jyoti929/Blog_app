@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Fetch single blog from Backend REST API: GET /api/blogs/:id
     try {
       console.log(`[BlogDetails] Fetching blog ID ${blogId} from GET /api/blogs/${blogId}...`);
-      const response = await fetch(`http://localhost:5000/api/blogs/${blogId}`);
+      const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${apiBase}/blogs/${blogId}`);
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.data) {

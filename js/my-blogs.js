@@ -86,8 +86,9 @@ async function loadMyBlogs(token) {
     }
 
     if (!result || !result.success) {
-      console.log('[MyBlogs API] Requesting http://localhost:5000/api/blogs/myblogs...');
-      const res = await fetch('http://localhost:5000/api/blogs/myblogs', {
+      const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
+      console.log(`[MyBlogs API] Requesting ${apiBase}/blogs/myblogs...`);
+      const res = await fetch(`${apiBase}/blogs/myblogs`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -213,8 +214,9 @@ function renderMyBlogCards(container, blogs, token) {
     confirmDeleteBtn.onclick = async () => {
       if (activeDeleteId) {
         try {
+          const apiBase = window.API_BASE_URL || 'http://localhost:5000/api';
           console.log(`[MyBlogs] Sending DELETE /api/blogs/${activeDeleteId}...`);
-          const res = await fetch(`http://localhost:5000/api/blogs/${activeDeleteId}`, {
+          const res = await fetch(`${apiBase}/blogs/${activeDeleteId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
