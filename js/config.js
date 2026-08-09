@@ -11,7 +11,7 @@ window.API_BASE_URL = (
   window.location.hostname === "127.0.0.1"
 )
   ? "http://localhost:5000/api"
-  : "https://blog-app-ybg6.onrender.com";
+  : "https://blog-app-ybg6.onrender.com/api";
 
 // Helper accessor for modules/scripts
 if (typeof module !== 'undefined' && module.exports) {
