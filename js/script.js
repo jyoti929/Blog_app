@@ -319,8 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         blogGrid.innerHTML = `
           <div style="text-align:center; padding:50px 20px; background:var(--paper); border:1px solid var(--line); border-radius:12px;">
             <div style="font-size:2rem; margin-bottom:10px;">⚠️</div>
-            <h3 style="font-size:1.1rem; font-weight:700; color:var(--ink);">Failed to Load Blogs</h3>
-            <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">${fetchError}</p>
+            <h3 style="font-size:1.1rem; font-weight:700; color:var(--ink);">Unable to load blogs. Please try again later.</h3>
           </div>
         `;
         return;
@@ -348,8 +347,8 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             emptyState.innerHTML = `
               <div style="font-size:2.5rem; color:var(--primary); margin-bottom:10px;">📝</div>
-              <h3 style="font-size:1.1rem; font-weight:700;">No blogs have been published yet.</h3>
-              <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">Check back later or log in to create and publish your first story!</p>
+              <h3 style="font-size:1.1rem; font-weight:700;">No blogs published yet.</h3>
+              <p style="color:var(--muted); font-size:0.88rem; margin-top:4px;">Check back later for new stories!</p>
             `;
           }
 
@@ -510,17 +509,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch(`${apiBase}/blogs`);
         if (res.ok) {
           const data = await res.json();
-          if (data.success && data.data) {
+          if (data.success && Array.isArray(data.data)) {
             masterBlogsList = data.data; // Cache master list from MongoDB
             if (window.store && typeof window.store.setPosts === 'function') {
               window.store.setPosts(data.data);
             }
             if (data.categoryCounts) updateCategoryChipCounts(data.categoryCounts);
+          } else {
+            fetchError = 'Unable to load blogs. Please try again later.';
           }
+        } else {
+          fetchError = 'Unable to load blogs. Please try again later.';
         }
       } catch (err) {
         console.error('[Homepage API Error]:', err.message);
-        fetchError = 'Could not connect to backend server. Please verify your connection.';
+        fetchError = 'Unable to load blogs. Please try again later.';
       }
 
       renderHomePosts();

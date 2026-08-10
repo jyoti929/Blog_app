@@ -5,11 +5,15 @@
  * ==========================================================================
  */
 
-const API_BASE_URL = window.API_BASE_URL || 'http://localhost:5000/api';
+const getAuthApiBase = () => window.API_BASE_URL || (
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:5000/api"
+    : "https://blog-app-ybg6.onrender.com/api"
+);
 
 const Auth = {
   get API_BASE_URL() {
-    return window.API_BASE_URL || 'http://localhost:5000/api';
+    return getAuthApiBase();
   },
 
   // Retrieve stored JWT Token
@@ -61,7 +65,8 @@ const Auth = {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const baseUrl = this.API_BASE_URL;
+      const response = await fetch(`${baseUrl}/auth/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -108,9 +113,10 @@ const Auth = {
   // Login Function: POST /api/auth/login
   async login(email, password) {
     try {
-      console.log(`[Auth API] Sending POST ${API_BASE_URL}/auth/login request...`, { email });
+      const baseUrl = this.API_BASE_URL;
+      console.log(`[Auth API] Sending POST ${baseUrl}/auth/login request...`, { email });
 
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${baseUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -149,9 +155,10 @@ const Auth = {
   // Register Function: POST /api/auth/register
   async register(name, email, password) {
     try {
-      console.log(`[Auth API] Sending POST ${API_BASE_URL}/auth/register request...`, { name, email });
+      const baseUrl = this.API_BASE_URL;
+      console.log(`[Auth API] Sending POST ${baseUrl}/auth/register request...`, { name, email });
 
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetch(`${baseUrl}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

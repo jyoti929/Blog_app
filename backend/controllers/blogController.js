@@ -73,9 +73,6 @@ const createBlog = async (req, res, next) => {
 const getAllBlogs = async (req, res, next) => {
   try {
     const filter = { status: 'published' };
-    if (req.query.status) {
-      filter.status = req.query.status;
-    }
 
     if (req.query.category && req.query.category.trim().toLowerCase() !== 'all') {
       filter.category = { $regex: new RegExp(`^${req.query.category.trim()}$`, 'i') };
@@ -170,7 +167,7 @@ const getBlogById = async (req, res, next) => {
 
     const blog = await Blog.findById(req.params.id).populate('author', 'name email profileImage');
 
-    if (!blog) {
+    if (!blog || blog.status === 'draft') {
       return res.status(404).json({
         success: false,
         message: 'Blog post not found'
