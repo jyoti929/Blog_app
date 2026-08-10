@@ -156,12 +156,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   const signupForm = document.querySelector('#signup-form');
   if (signupForm) {
-    signupForm.addEventListener('submit', (e) => {
+    signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = signupForm.elements.name.value.trim();
-      const email = signupForm.elements.email.value.trim();
-      const password = signupForm.elements.password.value;
-      const confirm = signupForm.elements.confirm.value;
+      const name = signupForm.elements.name ? signupForm.elements.name.value.trim() : '';
+      const email = signupForm.elements.email ? signupForm.elements.email.value.trim() : '';
+      const password = signupForm.elements.password ? signupForm.elements.password.value : '';
+      const confirm = signupForm.elements.confirm ? signupForm.elements.confirm.value : '';
 
       if (!name || !email || !password) {
         alert('Please fill out all required fields.');
@@ -173,7 +173,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const res = window.store.registerUser(name, email, password);
+      let res;
+      if (typeof window.store !== 'undefined' && typeof window.store.registerUser === 'function') {
+        res = await window.store.registerUser(name, email, password);
+      } else if (typeof Auth !== 'undefined' && typeof Auth.register === 'function') {
+        res = await Auth.register(name, email, password);
+      } else {
+        res = { success: false, message: 'Authentication module missing.' };
+      }
+
       if (!res.success) {
         alert(res.message);
         return;
@@ -191,19 +199,39 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   const loginForm = document.querySelector('#login-form');
   if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = loginForm.elements.email.value.trim();
-      const password = loginForm.elements.password.value;
+      const email = loginForm.elements.email ? loginForm.elements.email.value.trim() : '';
+      const password = loginForm.elements.password ? loginForm.elements.password.value : '';
 
       if (!email || !password) {
-        alert('Please enter your email and password.');
+        const errorMsgEl = document.getElementById('errorMessage');
+        if (errorMsgEl) {
+          errorMsgEl.textContent = 'Please enter your email and password.';
+          errorMsgEl.style.display = 'block';
+        } else {
+          alert('Please enter your email and password.');
+        }
         return;
       }
 
-      const res = window.store.loginUser(email, password);
+      let res;
+      if (typeof window.store !== 'undefined' && typeof window.store.loginUser === 'function') {
+        res = await window.store.loginUser(email, password);
+      } else if (typeof Auth !== 'undefined' && typeof Auth.login === 'function') {
+        res = await Auth.login(email, password);
+      } else {
+        res = { success: false, message: 'Authentication module missing.' };
+      }
+
       if (!res.success) {
-        alert(res.message);
+        const errorMsgEl = document.getElementById('errorMessage');
+        if (errorMsgEl) {
+          errorMsgEl.textContent = res.message;
+          errorMsgEl.style.display = 'block';
+        } else {
+          alert(res.message);
+        }
         return;
       }
 

@@ -56,6 +56,30 @@ const Auth = {
     return true;
   },
 
+  // Helper to safely parse JSON responses without throwing SyntaxError on HTML/empty responses
+  async parseResponse(response) {
+    try {
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        return await response.json();
+      }
+      const text = await response.text();
+      console.warn(`[Auth API] Server returned non-JSON response (HTTP ${response.status}):`, text.slice(0, 200));
+      return {
+        success: false,
+        message: response.status === 404
+          ? 'API endpoint not found. Please verify backend URL.'
+          : `Server returned HTTP ${response.status}`
+      };
+    } catch (err) {
+      console.error('[Auth API] Failed to parse response body:', err.message);
+      return {
+        success: false,
+        message: 'Invalid response format received from server.'
+      };
+    }
+  },
+
   // Verify JWT Token against Backend Endpoint GET /api/auth/me
   async verifyTokenWithBackend() {
     const token = this.getToken();
@@ -80,7 +104,7 @@ const Auth = {
         return false;
       }
 
-      const data = await response.json();
+      const data = await this.parseResponse(response);
       if (data.success && data.user) {
         console.log('[Auth] Authentication successful.');
         localStorage.setItem('loggedInUser', data.user.email);
@@ -112,88 +136,88 @@ const Auth = {
 
   // Login Function: POST /api/auth/login
   async login(email, password) {
+    let response;
     try {
       const baseUrl = this.API_BASE_URL;
       console.log(`[Auth API] Sending POST ${baseUrl}/auth/login request...`, { email });
 
-      const response = await fetch(`${baseUrl}/auth/login`, {
+      response = await fetch(`${baseUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, password })
       });
-
-      const data = await response.json();
-      console.log('[Auth API] Server login response:', data);
-
-      if (!response.ok || !data.success) {
-        return {
-          success: false,
-          message: data.message || 'Invalid email or password'
-        };
-      }
-
-      // Store JWT token & session credentials in localStorage
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('loggedInUser', data.user.email);
-      localStorage.setItem('user_data', JSON.stringify(data.user));
-
-      console.log('[Auth API] Login successful! JWT token saved in localStorage:', data.token);
-      return { success: true, user: data.user, token: data.token };
-
-    } catch (err) {
-      console.error('[Auth API Error] Network or server error during login:', err);
+    } catch (netErr) {
+      console.error('[Auth API Error] Network connection error during login:', netErr.message);
       return {
         success: false,
         message: 'Could not connect to backend server. Please verify your connection or try again later.'
       };
     }
+
+    const data = await this.parseResponse(response);
+    console.log('[Auth API] Server login response:', data);
+
+    if (!response.ok || !data.success) {
+      return {
+        success: false,
+        message: data.message || (response.status === 401 ? 'Invalid email or password' : `Login failed (HTTP ${response.status})`)
+      };
+    }
+
+    // Store JWT token & session credentials in localStorage
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('loggedInUser', data.user ? data.user.email : email);
+    if (data.user) localStorage.setItem('user_data', JSON.stringify(data.user));
+
+    console.log('[Auth API] Login successful! JWT token saved in localStorage:', data.token);
+    return { success: true, user: data.user, token: data.token };
   },
 
   // Register Function: POST /api/auth/register
   async register(name, email, password) {
+    let response;
     try {
       const baseUrl = this.API_BASE_URL;
       console.log(`[Auth API] Sending POST ${baseUrl}/auth/register request...`, { name, email });
 
-      const response = await fetch(`${baseUrl}/auth/register`, {
+      response = await fetch(`${baseUrl}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ name, email, password })
       });
-
-      const data = await response.json();
-      console.log('[Auth API] Server registration response:', data);
-
-      if (!response.ok || !data.success) {
-        return {
-          success: false,
-          message: data.message || 'Registration failed'
-        };
-      }
-
-      // If backend returns token upon registration, save it
-      if (data.token) {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('loggedInUser', data.user ? data.user.email : email);
-        if (data.user) localStorage.setItem('user_data', JSON.stringify(data.user));
-      }
-
-      console.log('[Auth API] Registration successful!');
-      return { success: true, message: data.message };
-
-    } catch (err) {
-      console.error('[Auth API Error] Network or server error during registration:', err);
+    } catch (netErr) {
+      console.error('[Auth API Error] Network connection error during registration:', netErr.message);
       return {
         success: false,
         message: 'Could not connect to backend server. Please verify your connection or try again later.'
       };
     }
+
+    const data = await this.parseResponse(response);
+    console.log('[Auth API] Server registration response:', data);
+
+    if (!response.ok || !data.success) {
+      return {
+        success: false,
+        message: data.message || `Registration failed (HTTP ${response.status})`
+      };
+    }
+
+    // If backend returns token upon registration, save it
+    if (data.token) {
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('loggedInUser', data.user ? data.user.email : email);
+      if (data.user) localStorage.setItem('user_data', JSON.stringify(data.user));
+    }
+
+    console.log('[Auth API] Registration successful!');
+    return { success: true, message: data.message || 'Registration successful.' };
   },
 
   // Clear Session Credentials & Frontend Store Cache

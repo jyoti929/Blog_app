@@ -15,6 +15,21 @@ const getStoreBlogsUrl = () => `${getStoreApiBase()}/blogs`;
 window.store = {
   cachedPosts: [],
 
+  // ── Auth Delegation ────────────────────────────────────────
+  async loginUser(email, password) {
+    if (typeof Auth !== 'undefined' && typeof Auth.login === 'function') {
+      return await Auth.login(email, password);
+    }
+    return { success: false, message: 'Authentication module not loaded' };
+  },
+
+  async registerUser(name, email, password) {
+    if (typeof Auth !== 'undefined' && typeof Auth.register === 'function') {
+      return await Auth.register(name, email, password);
+    }
+    return { success: false, message: 'Authentication module not loaded' };
+  },
+
   // ── Auth Headers ───────────────────────────────────────────
   getHeaders() {
     const token   = localStorage.getItem('authToken');
